@@ -46,7 +46,7 @@ ifeq "$(origin CC)" "default"
   CXX        = clang++
 endif
 
-PROGS = aflgo-clang aflgo-pass.so aflgo-runtime.o aflgo-runtime-32.o aflgo-runtime-64.o
+PROGS = aflgo-clang aflgo-pass.so aflgo-runtime.o aflgo-runtime-32.o aflgo-runtime-64.o gfuzz-runtime.o gfuzz-runtime-32.o gfuzz-runtime-64.o
 
 all: test_deps $(PROGS) test_build all_done
 
@@ -78,6 +78,17 @@ aflgo-runtime-32.o: aflgo-runtime.o.c | test_deps
 aflgo-runtime-64.o: aflgo-runtime.o.c | test_deps
 	@printf "[*] Building 64-bit variant of aflgo runtime (-m64)... "
 	@$(CC) $(CFLAGS) -m64 -fPIC -c $< -o $@ 2>/dev/null; if [ "$$?" = "0" ]; then echo "success!"; else echo "failed (that's fine)"; fi
+
+gfuzz-runtime.o: gfuzz-runtime.c | test_deps
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+gfuzz-runtime-32.o: gfuzz-runtime.c | test_deps
+	@printf "[*] Building 32-bit variant of gfuzz runtime (-m32)... "
+	@$(CC) $(CFLAGS) -m32 -fPIC -c $< -o $@ 2>/dev/null; if [ "$$?" = "0" ]; then echo "success!"; else echo "failed (that's fine)"; fi
+
+gfuzz-runtime-64.o: gfuzz-runtime.c | test_deps
+	@printf "[*] Building 64-bit variant of gfuzz runtime (-m64)... "
+	@$(CC) $(CFLAGS) -m64 -fPIC -c $< -o $@ 2>/dev/null; if [ "$$?" = "0" ]; then echo "success!"; fi
 
 test_build: $(PROGS)
 	@echo "[*] Testing the CC wrapper and instrumentation output..."
