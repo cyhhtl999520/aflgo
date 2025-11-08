@@ -4,9 +4,26 @@
 
 This directory contains the academic paper manuscript for GFuzz, formatted according to The Journal of Systems & Software (JSS) requirements.
 
+**IMPORTANT**: This manuscript has been restructured per user request with the following section order:
+1. Introduction
+2. Problem and Motivation  
+3. Approach
+4. Empirical Study
+5. Discussion
+6. Related Work
+7. Conclusion
+8. CRediT authorship contribution statement
+9. Declaration of competing interest
+10. Data availability
+11. Acknowledgment
+12. References
+
 ## Files
 
-- `manuscript.tex` - Main LaTeX manuscript file
+- `manuscript.tex` - Main LaTeX manuscript file (completely rewritten, ~12-15 pages)
+- `manuscript_old.tex` - Previous version (backup)
+- `manuscript_backup.tex` - Original backup
+- `figures/` - Directory containing figure files and descriptions
 - `README.md` - This file
 - `compile.sh` - Script to compile the paper
 
