@@ -10,6 +10,7 @@
 \usepackage{xcolor}
 \usepackage{listings}
 \usepackage{subcaption}
+\usepackage{float}  % For better figure placement control
 
 \modulolinenumbers[5]
 
@@ -112,7 +113,7 @@ Third, different types of variables require different treatment in terms of stat
 
 Figure~\ref{fig:comparison} illustrates the conceptual difference between traditional control-flow-guided directed fuzzing and our state-diversity-guided approach. Traditional approaches focus on reaching target locations through control flow paths, represented by the progression from entry point to target along program paths. Our approach adds a complementary dimension by systematically exploring diverse variable states at and around the target locations, increasing the likelihood of satisfying the data conditions required to trigger vulnerabilities.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.8\columnwidth]{figures/approach_comparison.pdf}
 \caption{Comparison between traditional control-flow-guided directed fuzzing (left) and GFuzz's state-diversity-guided approach (right). Traditional approaches focus on reaching targets through control flow, while GFuzz additionally explores diverse variable states.}
@@ -130,7 +131,7 @@ These requirements inform the design of GFuzz, which we present in the following
 
 GFuzz extends directed greybox fuzzing with systematic variable state diversity guidance through four tightly integrated components. Figure~\ref{fig:architecture} presents the overall architecture, showing how these components interact during the fuzzing workflow. The workflow begins with offline preprocessing to identify key variables and compute distances, continues with instrumented program execution to monitor variable states, and uses runtime diversity evaluation to guide seed selection and energy allocation throughout the fuzzing campaign.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/gfuzz_architecture.pdf}
 \caption{GFuzz architecture showing the four main components and their interactions during preprocessing and fuzzing phases.}
@@ -303,7 +304,7 @@ Our evaluation addresses four primary research questions. RQ1 asks how GFuzz com
 
 We selected four real-world programs containing known vulnerabilities for our evaluation. These programs represent diverse domains and vulnerability types, providing a comprehensive assessment of GFuzz's capabilities. Table~\ref{tab:benchmarks} summarizes the benchmark programs, their characteristics, and the target vulnerabilities.
 
-\begin{table}[t]
+\begin{table}[!htbp]
 \centering
 \caption{Benchmark programs and target vulnerabilities}
 \label{tab:benchmarks}
@@ -367,7 +368,7 @@ For edge coverage, GFuzz achieved between 9.9\% and 13.6\% higher coverage than 
 
 Figure~\ref{fig:coverage_over_time} shows how edge coverage evolves over time during fuzzing campaigns for the libxml2 benchmark. The curves represent averages across ten trials with shaded regions indicating standard deviations. GFuzz consistently achieves higher coverage than AFLGo throughout the fuzzing campaign, with the gap widening over time as state diversity guidance accumulates advantages through better exploration of the state space around targets.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.8\columnwidth]{figures/coverage_over_time.pdf}
 \caption{Edge coverage over time for libxml2, showing GFuzz (blue) consistently outperforming AFLGo (orange) throughout the six-hour fuzzing campaign.}
@@ -378,7 +379,7 @@ Figure~\ref{fig:coverage_over_time} shows how edge coverage evolves over time du
 
 Table~\ref{tab:crashes} presents the vulnerability detection results, showing the number of unique crashes discovered and the time required to find the first crash for each benchmark.
 
-\begin{table}[t]
+\begin{table}[!htbp]
 \centering
 \caption{Vulnerability detection comparison between GFuzz and AFLGo}
 \label{tab:crashes}
@@ -406,7 +407,7 @@ For time to first crash, GFuzz reduced the time by an average of 29.2\% compared
 
 Table~\ref{tab:overhead} presents execution throughput measurements showing the performance overhead introduced by GFuzz's state monitoring and diversity evaluation mechanisms.
 
-\begin{table}[t]
+\begin{table}[!htbp]
 \centering
 \caption{Execution throughput comparison (executions per second)}
 \label{tab:overhead}
@@ -434,7 +435,7 @@ To understand how individual components contribute to GFuzz's overall effectiven
 
 Table~\ref{tab:ablation} presents ablation study results on the libxml2 benchmark, showing that each component makes meaningful contributions to overall effectiveness.
 
-\begin{table}[t]
+\begin{table}[!htbp]
 \centering
 \caption{Ablation study results on libxml2 benchmark}
 \label{tab:ablation}
