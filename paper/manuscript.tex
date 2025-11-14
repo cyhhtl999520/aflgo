@@ -485,7 +485,25 @@ Several promising avenues for future work emerge from this research. Advanced va
 
 \subsection{Greybox Fuzzing Techniques}
 
-American Fuzzy Lop pioneered coverage-guided greybox fuzzing by using lightweight edge coverage instrumentation to guide mutation-based test generation. Numerous subsequent works have enhanced various aspects of greybox fuzzing. AFLFast introduced power schedules based on Markov chain analysis of the fuzzing process to allocate mutation energy more effectively. FairFuzz targeted rare branches that are infrequently exercised to improve coverage of hard-to-reach code regions. MOpt applied particle swarm optimization to learn effective mutation operator schedules. These works focus on improving exploration of the control-flow dimension, which GFuzz complements with data-state awareness.
+Greybox fuzzing emerged as a practical middle ground between blackbox and whitebox testing approaches, combining the efficiency of mutation-based input generation with lightweight program instrumentation to guide the testing process. This paradigm has achieved remarkable success in discovering vulnerabilities across diverse software systems, from network protocols to operating system kernels.
+
+American Fuzzy Lop~\cite{afl} pioneered the coverage-guided greybox fuzzing paradigm by introducing lightweight edge coverage instrumentation coupled with genetic algorithm-based input evolution. AFL's key innovation was using coverage feedback to guide mutation-based test generation, preferentially evolving inputs that exercise new execution paths while discarding those that traverse previously explored paths. This approach achieved unprecedented effectiveness in automated vulnerability detection, discovering thousands of bugs in widely-deployed software including critical security flaws in libraries, compilers, and system utilities.
+
+LibFuzzer~\cite{libfuzzer} provided an alternative in-process fuzzing framework integrated with the LLVM compiler infrastructure, enabling efficient fuzzing of library APIs and function interfaces. Unlike AFL's fork-server architecture that launches separate processes for each test execution, LibFuzzer executes test cases within a single persistent process, reducing overhead and enabling much higher execution throughput for fuzzing individual functions or components. This architecture has proven particularly effective for fuzzing library interfaces, parsers, and other components with well-defined APIs.
+
+Subsequent research has enhanced various dimensions of the greybox fuzzing process. AFLFast~\cite{aflfast} introduced power schedules based on Markov chain analysis of the fuzzing process, modeling path transitions as states and computing optimal mutation energy allocation to maximize the rate of discovering new paths. By analyzing how frequently different paths are exercised and their likelihood of leading to unexplored code, AFLFast allocates more mutations to promising seeds, achieving faster path discovery compared to AFL's uniform power schedule.
+
+FairFuzz~\cite{fairfuzz} targeted rare branches that are infrequently exercised during fuzzing campaigns, recognizing that default power scheduling strategies tend to under-exercise difficult-to-reach code regions. By identifying branches that appear rarely in the corpus and preferentially mutating inputs that reach these branches, FairFuzz improves coverage of hard-to-reach code and discovers vulnerabilities that require specific input patterns to trigger.
+
+MOpt~\cite{mopt} applied particle swarm optimization to learn effective mutation operator schedules dynamically during fuzzing. Rather than using fixed probabilities for each mutation operator, MOpt treats operator selection as an optimization problem and learns which combinations of mutations are most effective for the target program through particle swarm optimization over the operator probability distribution. This adaptive approach discovers more paths and vulnerabilities compared to static mutation strategies.
+
+CollAFL~\cite{collafl} introduced collision-aware coverage tracking to address the bitmap collision problem in AFL's coverage map, where different execution paths may hash to the same bitmap location, causing the fuzzer to incorrectly consider new paths as previously explored. By using more sophisticated hashing schemes and larger coverage maps, CollAFL reduces collisions and achieves better path exploration.
+
+Angora~\cite{angora} employed byte-level taint tracking and gradient descent on execution traces to efficiently solve complex path constraints without expensive symbolic execution. By tracking which input bytes influence conditional branches and using gradient-based search to satisfy these conditions, Angora navigates through nested conditionals and magic byte comparisons more effectively than mutation-based approaches alone.
+
+REDQUEEN~\cite{redqueen} observed input-to-state correspondences during execution to identify magic bytes and checksums without heavyweight symbolic execution. By monitoring data comparisons during program execution and synthesizing inputs that satisfy these comparisons through pattern matching, REDQUEEN efficiently handles obstacles that typically impede mutation-based fuzzing.
+
+These works primarily focus on improving exploration of the control-flow dimension through better seed selection, mutation strategies, and constraint solving. GFuzz complements these techniques by introducing data-state awareness as an orthogonal dimension of guidance, enabling more effective exploration of the program state space around target locations for directed fuzzing scenarios.
 
 \subsection{Directed Greybox Fuzzing}
 
@@ -555,6 +573,9 @@ C.~Lemieux and K.~Sen, ``FairFuzz: A targeted mutation strategy for increasing g
 
 \bibitem{mopt}
 C.~Lyu, S.~Ji, C.~Zhang, Y.~Li, W.-H.~Lee, Y.~Song, and R.~Beyah, ``MOPT: Optimized mutation scheduling for fuzzers,'' in \emph{Proceedings of the 28th USENIX Security Symposium}, 2019, pp. 1949--1966.
+
+\bibitem{collafl}
+S.~Gan, C.~Zhang, X.~Qin, X.~Tu, K.~Li, Z.~Pei, and Z.~Chen, ``CollAFL: Path sensitive fuzzing,'' in \emph{Proceedings of the 2018 IEEE Symposium on Security and Privacy (S\&P)}, 2018, pp. 679--696.
 
 \bibitem{redqueen}
 C.~Aschermann, S.~Schumilo, T.~Blazytko, R.~Gawlik, and T.~Holz, ``REDQUEEN: Fuzzing with input-to-state correspondence,'' in \emph{Proceedings of the 2019 Network and Distributed System Security Symposium (NDSS)}, 2019.
