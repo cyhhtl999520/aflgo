@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <strings.h>
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/IRBuilder.h"
@@ -165,7 +166,10 @@ bool AFLCoverage::runOnModule(Module &M) {
   /* Variable scoring mechanism (optional) */
   
   char* gfuzz_scoring_enabled = getenv("GFUZZ_SCORING_ENABLED");
-  if (gfuzz_scoring_enabled && atoi(gfuzz_scoring_enabled) == 1) {
+  if (gfuzz_scoring_enabled && 
+      (strcmp(gfuzz_scoring_enabled, "1") == 0 || 
+       strcasecmp(gfuzz_scoring_enabled, "true") == 0 ||
+       strcasecmp(gfuzz_scoring_enabled, "on") == 0)) {
     
     if (!be_quiet) {
       SAYF(cCYA "[GFuzz] Variable scoring mechanism enabled\n" cRST);
@@ -224,7 +228,10 @@ bool AFLCoverage::runOnModule(Module &M) {
       
       // Export scores if debug mode is enabled
       char* debug_mode = getenv("GFUZZ_DEBUG");
-      if (debug_mode && atoi(debug_mode) == 1) {
+      if (debug_mode && 
+          (strcmp(debug_mode, "1") == 0 || 
+           strcasecmp(debug_mode, "true") == 0 ||
+           strcasecmp(debug_mode, "on") == 0)) {
         scorer.printScores();
         scorer.exportScores("variable_scores.csv");
       }

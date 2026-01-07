@@ -21,8 +21,10 @@ static bool isPointerType(Type* ty) {
 static bool isStringType(Type* ty) {
   if (auto* ptrTy = dyn_cast<PointerType>(ty)) {
 #if LLVM_VERSION_MAJOR >= 11
-    // LLVM 11+ uses opaque pointers differently
-    return false; // Simplified for now
+    // LLVM 11+ uses opaque pointers. String detection would require additional
+    // analysis of how the pointer is used (e.g., passed to string functions).
+    // For now, we use a conservative approach.
+    return false;
 #else
     Type* elemTy = ptrTy->getElementType();
     return elemTy->isIntegerTy(8); // char*
@@ -70,8 +72,16 @@ static int getCFGDistance(BasicBlock* from, BasicBlock* to) {
 void VariableScorer::loadConfig(const std::string& config_file) {
   // Parse JSON config file
   // Simplified: use default configuration
-  // Full implementation would use a JSON library (e.g., nlohmann/json)
+  // Full implementation would require a JSON library (e.g., nlohmann/json)
+  // For now, we use default values which match the provided scoring_config.json
   config_ = ScoringConfig();
+  
+  // Note: To enable JSON parsing, integrate a JSON library and uncomment:
+  // std::ifstream file(config_file);
+  // nlohmann::json j;
+  // file >> j;
+  // config_.weight_distance = j["scoring_weights"]["distance"];
+  // ... (parse other fields)
 }
 
 double VariableScorer::computeDistanceScore(Value* var) {
@@ -85,10 +95,11 @@ double VariableScorer::computeDistanceScore(Value* var) {
   Function* func = inst->getFunction();
   BasicBlock* bb = inst->getParent();
 
-  // Assume target location is known (needs to be passed externally)
-  // Using simplified distance calculation here
-  int cg_distance = 5;  // Call graph distance
-  int cfg_distance = 10; // CFG distance
+  // Note: These are placeholder values. For production use, integrate with
+  // AFLGo's distance calculation or compute actual call graph/CFG distances.
+  // The actual distance should be obtained from AFLGo's distance.cfg.txt
+  int cg_distance = 5;  // TODO: Call graph distance from AFLGo
+  int cfg_distance = 10; // TODO: CFG distance calculation
 
   double normalized_distance = (cg_distance + cfg_distance) / 100.0;
   return 1.0 / (1.0 + normalized_distance);
@@ -307,8 +318,10 @@ std::vector<Value*> VariableScorer::selectTopVariables() {
     result.push_back(scored_vars[i].first);
   }
 
-  // Apply type quota constraints (simplified version)
-  // Full implementation needs more complex logic for type diversity
+  // Note: Type quota constraints are not fully implemented in this version.
+  // For production use, implement type diversity checking to ensure minimum
+  // quotas for pointer_min, integer_min, and string_min are met by rebalancing
+  // the selection if necessary.
 
   return result;
 }

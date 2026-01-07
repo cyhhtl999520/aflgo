@@ -91,6 +91,10 @@ echo ""
 echo "[*] Testing with test-scoring.c..."
 cd ..
 
+# Create a secure temporary file
+TEMP_LOG=$(mktemp /tmp/scoring-test.XXXXXX.log)
+trap "rm -f $TEMP_LOG" EXIT
+
 # Enable scoring for compilation
 export GFUZZ_SCORING_ENABLED=1
 export GFUZZ_SCORING_CONFIG=../config/scoring_config.json
@@ -98,15 +102,15 @@ export GFUZZ_DEBUG=1
 export AFL_QUIET=1
 
 # Compile test program
-./afl-clang-fast -o test-scoring test-scoring.c 2>&1 | tee /tmp/scoring-test.log
+./afl-clang-fast -o test-scoring test-scoring.c 2>&1 | tee "$TEMP_LOG"
 
 if [ -f "test-scoring" ]; then
     echo ""
     echo "[*] Test program compiled successfully"
     
     # Check if scoring mechanism was invoked
-    if grep -q "Variable scoring mechanism enabled" /tmp/scoring-test.log 2>/dev/null || \
-       grep -q "GFuzz" /tmp/scoring-test.log 2>/dev/null; then
+    if grep -q "Variable scoring mechanism enabled" "$TEMP_LOG" 2>/dev/null || \
+       grep -q "GFuzz" "$TEMP_LOG" 2>/dev/null; then
         echo "  ✓ Scoring mechanism was active during compilation"
     else
         echo "  Note: Scoring mechanism may not have been active (check environment variables)"

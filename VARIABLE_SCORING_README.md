@@ -187,12 +187,16 @@ Ensure environment variables are set:
 export GFUZZ_SCORING_ENABLED=1
 ```
 
+Accepted values: `1`, `true`, `on` (case-insensitive)
+
 ### Configuration file not found
 
 Use absolute path:
 ```bash
 export GFUZZ_SCORING_CONFIG=/absolute/path/to/scoring_config.json
 ```
+
+Note: JSON parsing is not yet implemented. The system uses default configuration values that match the provided `scoring_config.json`. To enable custom configurations, integrate a JSON library like nlohmann/json.
 
 ### Build errors
 
@@ -201,6 +205,16 @@ Ensure LLVM is properly installed:
 which llvm-config
 llvm-config --version  # Should be 11.0 or compatible
 ```
+
+## Known Limitations
+
+1. **JSON Configuration**: The current implementation uses default values. JSON parsing requires integrating a JSON library.
+
+2. **Distance Calculation**: Uses placeholder values. For production, integrate with AFLGo's distance calculation from `distance.cfg.txt`.
+
+3. **Type Quotas**: Type diversity quotas are defined but not fully enforced in selection. Future versions will implement proper type balancing.
+
+4. **LLVM 11+ String Detection**: Opaque pointers in LLVM 11+ make string type detection conservative. Consider using usage pattern analysis for better accuracy.
 
 ## Performance Impact
 
