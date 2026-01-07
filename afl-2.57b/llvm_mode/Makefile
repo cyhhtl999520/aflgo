@@ -80,8 +80,8 @@ endif
 	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
 	ln -sf afl-clang-fast ../afl-clang-fast++
 
-../afl-llvm-pass.so: afl-llvm-pass.so.cc | test_deps
-	$(CXX) $(CLANG_CFL) -shared $< -o $@ $(CLANG_LFL)
+../afl-llvm-pass.so: afl-llvm-pass.so.cc variable-scoring.cc | test_deps
+	$(CXX) $(CLANG_CFL) -shared afl-llvm-pass.so.cc variable-scoring.cc -o $@ $(CLANG_LFL)
 
 ../afl-llvm-rt.o: afl-llvm-rt.o.c | test_deps
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@
@@ -113,3 +113,4 @@ all_done: test_build
 clean:
 	rm -f *.o *.so *~ a.out core core.[1-9][0-9]* test-instr .test-instr0 .test-instr1 
 	rm -f $(PROGS) ../afl-clang-fast++
+	rm -f variable_scores.csv

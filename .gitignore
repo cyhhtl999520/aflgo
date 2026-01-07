@@ -1,0 +1,49 @@
+# Build artifacts
+*.o
+*.so
+*.a
+*.dylib
+*.exe
+
+# Test outputs
+test-instr
+test-scoring
+variable_scores.csv
+gfuzz_variables.csv
+*.log
+
+# AFL/GFuzz outputs
+out/
+in/
+sync/
+.test-instr*
+
+# Temporary files
+*~
+*.swp
+*.swo
+.DS_Store
+
+# IDE files
+.vscode/
+.idea/
+*.code-workspace
+
+# Build directories
+build/
+cmake-build-*/
+
+# LLVM build artifacts
+instrument/llvm_tools/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Experiments
+experiments/
+temp/
+tmp/

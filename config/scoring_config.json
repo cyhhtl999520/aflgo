@@ -1,0 +1,23 @@
+{
+  "scoring_weights": {
+    "distance": 0.25,
+    "type_complexity": 0.20,
+    "memory_context": 0.20,
+    "control_flow": 0.15,
+    "data_flow": 0.15,
+    "frequency": 0.05
+  },
+  "filtering": {
+    "score_threshold": 0.5,
+    "top_k": 100,
+    "type_quotas": {
+      "pointer_min": 0.20,
+      "integer_min": 0.15,
+      "string_min": 0.10
+    }
+  },
+  "normalization": {
+    "distance_max": 1000,
+    "frequency_max": 100
+  }
+}
