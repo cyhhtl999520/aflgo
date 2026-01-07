@@ -33,6 +33,7 @@
 
 #include "../config.h"
 #include "../debug.h"
+#include "variable-scoring.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,6 +47,7 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
 using namespace llvm;
+using namespace gfuzz;
 
 namespace {
 
@@ -159,6 +161,75 @@ bool AFLCoverage::runOnModule(Module &M) {
       inst_blocks++;
 
     }
+
+  /* Variable scoring mechanism (optional) */
+  
+  char* gfuzz_scoring_enabled = getenv("GFUZZ_SCORING_ENABLED");
+  if (gfuzz_scoring_enabled && atoi(gfuzz_scoring_enabled) == 1) {
+    
+    if (!be_quiet) {
+      SAYF(cCYA "[GFuzz] Variable scoring mechanism enabled\n" cRST);
+    }
+    
+    // Collect candidate variables from all functions
+    std::vector<Value*> all_candidates;
+    
+    for (auto &F : M) {
+      if (F.isDeclaration()) continue;
+      
+      for (auto &BB : F) {
+        for (auto &I : BB) {
+          // Collect interesting variables: pointers, integers, etc.
+          if (I.getType()->isPointerTy() || 
+              I.getType()->isIntegerTy() ||
+              I.getType()->isFloatingPointTy()) {
+            all_candidates.push_back(&I);
+          }
+        }
+      }
+      
+      // Also collect function arguments
+      for (auto &Arg : F.args()) {
+        if (Arg.getType()->isPointerTy() || 
+            Arg.getType()->isIntegerTy() ||
+            Arg.getType()->isFloatingPointTy()) {
+          all_candidates.push_back(&Arg);
+        }
+      }
+    }
+    
+    if (!all_candidates.empty()) {
+      // Initialize variable scorer
+      VariableScorer scorer;
+      
+      // Load configuration if available
+      char* config_file = getenv("GFUZZ_SCORING_CONFIG");
+      if (config_file) {
+        scorer.loadConfig(config_file);
+      }
+      
+      // Score all candidate variables
+      scorer.scoreAllVariables(all_candidates);
+      
+      // Select top variables
+      std::vector<Value*> selected = scorer.selectTopVariables();
+      
+      if (!be_quiet) {
+        SAYF(cGRN "[GFuzz] Scored %zu variables, selected %zu key variables\n" cRST,
+             all_candidates.size(), selected.size());
+        
+        double reduction = (1.0 - (double)selected.size() / all_candidates.size()) * 100.0;
+        SAYF(cGRN "[GFuzz] Variable reduction: %.1f%%\n" cRST, reduction);
+      }
+      
+      // Export scores if debug mode is enabled
+      char* debug_mode = getenv("GFUZZ_DEBUG");
+      if (debug_mode && atoi(debug_mode) == 1) {
+        scorer.printScores();
+        scorer.exportScores("variable_scores.csv");
+      }
+    }
+  }
 
   /* Say something nice. */
 
