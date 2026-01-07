@@ -98,8 +98,20 @@ double VariableScorer::computeDistanceScore(Value* var) {
   // Note: These are placeholder values. For production use, integrate with
   // AFLGo's distance calculation or compute actual call graph/CFG distances.
   // The actual distance should be obtained from AFLGo's distance.cfg.txt
+  // 
+  // TODO: Consider adding environment variable to override these defaults:
+  //   GFUZZ_DEFAULT_CG_DISTANCE - default call graph distance
+  //   GFUZZ_DEFAULT_CFG_DISTANCE - default CFG distance
   int cg_distance = 5;  // TODO: Call graph distance from AFLGo
   int cfg_distance = 10; // TODO: CFG distance calculation
+  
+  // Warn about placeholder usage (only once)
+  static bool warned = false;
+  if (!warned) {
+    errs() << "Warning: Using placeholder distance values. "
+           << "Integrate with AFLGo for accurate distance calculation.\n";
+    warned = true;
+  }
 
   double normalized_distance = (cg_distance + cfg_distance) / 100.0;
   return 1.0 / (1.0 + normalized_distance);
@@ -365,7 +377,8 @@ void VariableScorer::printScores() const {
 void VariableScorer::exportScores(const std::string& filename) const {
   std::ofstream out(filename);
   if (!out.is_open()) {
-    errs() << "Error: Cannot open file " << filename << "\n";
+    errs() << "Error: Cannot open file " << filename 
+           << " for writing. Check permissions and disk space.\n";
     return;
   }
 

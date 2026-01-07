@@ -92,7 +92,7 @@ echo "[*] Testing with test-scoring.c..."
 cd ..
 
 # Create a secure temporary file
-TEMP_LOG=$(mktemp /tmp/scoring-test.XXXXXX.log)
+TEMP_LOG=$(mktemp -t scoring-test.XXXXXX.log 2>/dev/null || mktemp)
 trap "rm -f $TEMP_LOG" EXIT
 
 # Enable scoring for compilation

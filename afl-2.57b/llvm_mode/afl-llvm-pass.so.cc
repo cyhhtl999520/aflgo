@@ -166,7 +166,7 @@ bool AFLCoverage::runOnModule(Module &M) {
   /* Variable scoring mechanism (optional) */
   
   char* gfuzz_scoring_enabled = getenv("GFUZZ_SCORING_ENABLED");
-  if (gfuzz_scoring_enabled && 
+  if (gfuzz_scoring_enabled != NULL && 
       (strcmp(gfuzz_scoring_enabled, "1") == 0 || 
        strcasecmp(gfuzz_scoring_enabled, "true") == 0 ||
        strcasecmp(gfuzz_scoring_enabled, "on") == 0)) {
@@ -228,7 +228,7 @@ bool AFLCoverage::runOnModule(Module &M) {
       
       // Export scores if debug mode is enabled
       char* debug_mode = getenv("GFUZZ_DEBUG");
-      if (debug_mode && 
+      if (debug_mode != NULL && 
           (strcmp(debug_mode, "1") == 0 || 
            strcasecmp(debug_mode, "true") == 0 ||
            strcasecmp(debug_mode, "on") == 0)) {
