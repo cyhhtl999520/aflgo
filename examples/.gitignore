@@ -4,3 +4,4 @@
 # but this file and those scripts
 !.gitignore
 !*.sh
+!*.md
