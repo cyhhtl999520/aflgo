@@ -118,7 +118,7 @@ double VariableScorer::computeDistanceScore(Value* var) {
 }
 
 double VariableScorer::computeTypeComplexityScore(Type* type) {
-  // Type complexity scoring
+  // Type complexity scoring with GFuzz type classification
   if (isPointerType(type)) {
     if (isStringType(type)) {
       return 0.8; // String pointer
@@ -128,10 +128,12 @@ double VariableScorer::computeTypeComplexityScore(Type* type) {
     return 0.7; // Array
   } else if (type->isIntegerTy()) {
     int bitWidth = type->getIntegerBitWidth();
-    if (bitWidth >= 32) {
+    if (bitWidth == 8) {
+      return 0.4; // char - important for GFuzz char type tracking
+    } else if (bitWidth >= 32) {
       return 0.5; // int/long
     }
-    return 0.3; // char/short
+    return 0.3; // short
   } else if (type->isFloatingPointTy()) {
     return 0.4; // float/double
   }
@@ -279,6 +281,18 @@ void VariableScorer::scoreVariable(Value* var) {
   if (auto* inst = dyn_cast<Instruction>(var)) {
     score.parent_function = inst->getFunction();
   }
+  
+  // Assign GFuzz variable type for runtime compatibility
+  Type* type = var->getType();
+  if (isStringType(type)) {
+    score.gfuzz_var_type = GFUZZ_VAR_TYPE_STRING;
+  } else if (isPointerType(type)) {
+    score.gfuzz_var_type = GFUZZ_VAR_TYPE_POINTER;
+  } else if (type->isIntegerTy(8)) {
+    score.gfuzz_var_type = GFUZZ_VAR_TYPE_CHAR;
+  } else {
+    score.gfuzz_var_type = GFUZZ_VAR_TYPE_NUMERIC;
+  }
 
   // Calculate dimension scores
   score.distance_score = computeDistanceScore(var);
@@ -322,12 +336,20 @@ std::vector<Value*> VariableScorer::selectTopVariables() {
               return a.second > b.second;
             });
 
-  // Select Top-K
+  // Select Top-K (respecting GFUZZ_MAX_KEY_VARS limit)
   std::vector<Value*> result;
   size_t count = std::min((size_t)config_.top_k, scored_vars.size());
+  count = std::min(count, (size_t)GFUZZ_MAX_KEY_VARS);
 
+  // Assign unique variable IDs and mark as key variables
+  uint32_t var_id = 0;
   for (size_t i = 0; i < count; i++) {
-    result.push_back(scored_vars[i].first);
+    Value* var = scored_vars[i].first;
+    result.push_back(var);
+    
+    // Update the score entry to mark as selected
+    scores_[var].is_key_variable = true;
+    scores_[var].var_id = var_id++;
   }
 
   // Note: Type quota constraints are not fully implemented in this version.
@@ -398,4 +420,55 @@ void VariableScorer::exportScores(const std::string& filename) const {
 
   out.close();
   errs() << "Scores exported to " << filename << "\n";
+}
+
+// ============================================================================
+// GFuzz Integration Methods
+// ============================================================================
+
+void VariableScorer::exportGFuzzMetadata(const std::string& filename) const {
+  std::ofstream out(filename);
+  if (!out.is_open()) {
+    errs() << "Error: Cannot open file " << filename 
+           << " for writing GFuzz metadata. Check permissions and disk space.\n";
+    return;
+  }
+
+  // Export header
+  out << "var_id,variable_name,gfuzz_type,total_score,is_key\n";
+
+  // Export only key variables for GFuzz runtime
+  for (const auto& entry : scores_) {
+    const VariableScore& score = entry.second;
+    if (score.is_key_variable) {
+      out << score.var_id << ","
+          << score.variable_name << ","
+          << (int)score.gfuzz_var_type << ","
+          << score.total_score << ","
+          << (score.is_key_variable ? "1" : "0") << "\n";
+    }
+  }
+
+  out.close();
+  errs() << "GFuzz metadata exported to " << filename << "\n";
+}
+
+std::vector<uint32_t> VariableScorer::getSelectedVariableIds() const {
+  std::vector<uint32_t> ids;
+  for (const auto& entry : scores_) {
+    if (entry.second.is_key_variable) {
+      ids.push_back(entry.second.var_id);
+    }
+  }
+  return ids;
+}
+
+size_t VariableScorer::getKeyVariableCount() const {
+  size_t count = 0;
+  for (const auto& entry : scores_) {
+    if (entry.second.is_key_variable) {
+      count++;
+    }
+  }
+  return count;
 }

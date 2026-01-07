@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Variable Scoring Mechanism is an advanced feature that intelligently identifies and filters key variables to significantly reduce monitoring overhead while maintaining detection effectiveness.
+The Variable Scoring Mechanism is an advanced feature that intelligently identifies and filters key variables to significantly reduce monitoring overhead while maintaining detection effectiveness. It is designed to integrate seamlessly with GFuzz's state diversity tracking.
 
 ## Key Benefits
 
@@ -10,6 +10,14 @@ The Variable Scoring Mechanism is an advanced feature that intelligently identif
 - **35% improvement** in precision
 - **56% reduction** in runtime overhead
 - **98%+ detection rate** maintained
+
+## GFuzz Integration Features
+
+- **Respects GFuzz Configuration**: Uses GFUZZ_MAX_KEY_VARS (1024) as the maximum number of tracked variables
+- **Type Classification**: Assigns variables to GFuzz types (NUMERIC, CHAR, STRING, POINTER) for runtime compatibility
+- **Metadata Export**: Generates `gfuzz_variables.csv` with variable IDs and types for GFuzz runtime
+- **Variable ID Mapping**: Provides unique IDs for each selected variable for state tracking
+- **Seamless Compatibility**: Works with GFuzz state diversity evaluation and adaptive scheduling
 
 ## Architecture
 

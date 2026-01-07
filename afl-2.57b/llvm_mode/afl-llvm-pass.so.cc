@@ -224,6 +224,10 @@ bool AFLCoverage::runOnModule(Module &M) {
         
         double reduction = (1.0 - (double)selected.size() / all_candidates.size()) * 100.0;
         SAYF(cGRN "[GFuzz] Variable reduction: %.1f%%\n" cRST, reduction);
+        
+        // Show key variable count for GFuzz runtime
+        size_t key_var_count = scorer.getKeyVariableCount();
+        SAYF(cGRN "[GFuzz] Key variables for runtime tracking: %zu\n" cRST, key_var_count);
       }
       
       // Export scores if debug mode is enabled
@@ -234,6 +238,7 @@ bool AFLCoverage::runOnModule(Module &M) {
            strcasecmp(debug_mode, "on") == 0)) {
         scorer.printScores();
         scorer.exportScores("variable_scores.csv");
+        scorer.exportGFuzzMetadata("gfuzz_variables.csv");
       }
     }
   }

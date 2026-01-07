@@ -9,6 +9,7 @@
 test-instr
 test-scoring
 variable_scores.csv
+gfuzz_variables.csv
 *.log
 
 # AFL/GFuzz outputs

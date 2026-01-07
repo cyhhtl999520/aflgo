@@ -10,6 +10,9 @@
 #include <queue>
 #include <set>
 
+// Include GFuzz configuration for alignment
+#include "../../gfuzz-config.h"
+
 namespace gfuzz {
 
 // Variable scoring structure
@@ -27,6 +30,11 @@ struct VariableScore {
   std::string variable_name;
   llvm::Type* variable_type;
   llvm::Function* parent_function;
+  
+  // GFuzz integration metadata
+  uint32_t var_id;              // Unique variable ID for GFuzz runtime
+  uint8_t gfuzz_var_type;       // GFuzz variable type (GFUZZ_VAR_TYPE_*)
+  bool is_key_variable;         // Selected as key variable
 
   VariableScore() : variable(nullptr), 
                     distance_score(0.0),
@@ -37,7 +45,10 @@ struct VariableScore {
                     frequency_score(0.0),
                     total_score(0.0),
                     variable_type(nullptr),
-                    parent_function(nullptr) {}
+                    parent_function(nullptr),
+                    var_id(0),
+                    gfuzz_var_type(GFUZZ_VAR_TYPE_NUMERIC),
+                    is_key_variable(false) {}
 };
 
 // Configuration parameters
@@ -64,7 +75,7 @@ struct ScoringConfig {
       weight_data_flow(0.15),
       weight_frequency(0.05),
       score_threshold(0.5),
-      top_k(100),
+      top_k(GFUZZ_MAX_KEY_VARS),  // Use GFuzz constant
       pointer_min_quota(0.20),
       integer_min_quota(0.15),
       string_min_quota(0.10) {}
@@ -102,6 +113,11 @@ public:
   // Debug and analysis
   void printScores() const;
   void exportScores(const std::string& filename) const;
+  
+  // GFuzz integration
+  void exportGFuzzMetadata(const std::string& filename) const;
+  std::vector<uint32_t> getSelectedVariableIds() const;
+  size_t getKeyVariableCount() const;
 };
 
 } // namespace gfuzz
