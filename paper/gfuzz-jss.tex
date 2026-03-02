@@ -584,12 +584,15 @@ as DGF targets, giving 20 CVEs in total.
 \centering
 \small
 \caption{Benchmark programs and target vulnerabilities (20 CVEs, 10 programs).
-  Each program contributes two CVE targets; rows are ordered by program.}
+  Each program contributes two CVE targets; rows are ordered by program.
+  ``kSLOC'' denotes thousands of source lines of code (i.e.\
+  LOC\,$\times 10^{3}$); ``Tgt.\ Funcs'' is the number of target functions
+  specified as DGF goals.}
 \label{tbl:benchmarks}
 \begin{tabular}{llp{3.2cm}p{4.0cm}rr}
 \toprule
 \textbf{Program} & \textbf{Version} & \textbf{CVE ID}
-  & \textbf{Vulnerability Class} & \textbf{LOC (K)} & \textbf{Tgt.\ Funcs} \\
+  & \textbf{Vulnerability Class} & \textbf{kSLOC} & \textbf{Tgt.\ Funcs} \\
 \midrule
 \multirow{2}{*}{mjs}     & \multirow{2}{*}{1.26}   & CVE-2020-23165 & Heap use-after-free     & \multirow{2}{*}{28}   & \multirow{2}{*}{3} \\
                          &                         & CVE-2021-31875 & Heap buffer overflow    &                       &                    \\[2pt]
