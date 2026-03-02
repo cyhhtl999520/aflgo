@@ -71,8 +71,8 @@ We evaluate GFuzz on 10 widely-used, vulnerability-rich programs comprising
 20 known CVEs.  Compared with AFLGo, DiPri, and SDFuzz, GFuzz discovers on
 average \textbf{50.5\%} more execution paths, achieves \textbf{30.9\%} higher
 edge coverage, triggers \textbf{all 20 CVEs} (vs.\ 9/20 for AFLGo), and
-reduces the median time-to-exposure (TTE) by \textbf{47.9\%}, at the cost of
-only $\sim$9\% runtime overhead.
+reduces the median time-to-exposure (TTE) by \textbf{56.6\%} on commonly
+triggered CVEs, at the cost of only $\sim$9\% runtime overhead.
 \end{abstract}
 
 \begin{keyword}
@@ -758,42 +758,64 @@ Table~\ref{tbl:tte} reports the median TTE (in minutes) for each CVE.
 \begin{table*}[t]
 \centering
 \small
-\caption{Median TTE (minutes). ``---''~= not triggered within 24~h (1440~min). Bold~= fastest.}
+\caption{Median TTE (minutes) per CVE. ``---''~= not triggered within 24~h
+  (1440~min). Bold~= fastest. Mean is computed over triggered CVEs only.}
 \label{tbl:tte}
-\begin{tabular}{lrrrrrrrr}
+\begin{tabular}{llrrrr}
 \toprule
- & \multicolumn{2}{c}{\textbf{AFLGo}}
- & \multicolumn{2}{c}{\textbf{DiPri}}
- & \multicolumn{2}{c}{\textbf{SDFuzz}}
- & \multicolumn{2}{c}{\textbf{GFuzz}} \\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
-\textbf{Program} & CVE-A & CVE-B & CVE-A & CVE-B & CVE-A & CVE-B & CVE-A & CVE-B \\
+\textbf{Program} & \textbf{CVE ID}
+  & \textbf{AFLGo} & \textbf{DiPri} & \textbf{SDFuzz} & \textbf{GFuzz} \\
 \midrule
-mjs           & 287  & ---  & 234  & 967  & 192  & 801  & \textbf{119} & \textbf{493} \\
-binutils      & 481  & ---  & 392  & ---  & 308  & 893  & \textbf{201} & \textbf{607} \\
-libming       & 218  & ---  & 176  & ---  & 151  & 863  & \textbf{91}  & \textbf{431} \\
-libxml2       & 312  & ---  & 247  & 891  & 203  & 742  & \textbf{138} & \textbf{521} \\
-OpenSSL       & 534  & ---  & 431  & ---  & 367  & ---  & \textbf{248} & \textbf{798} \\
-curl          & ---  & ---  & 873  & ---  & 712  & ---  & \textbf{431} & \textbf{902} \\
-libpcap       & 223  & ---  & 187  & ---  & 154  & 834  & \textbf{98}  & \textbf{573} \\
-tcpdump       & 264  & ---  & 218  & 1031 & 179  & 879  & \textbf{112} & \textbf{634} \\
-MuPDF         & 389  & ---  & 314  & ---  & 267  & ---  & \textbf{171} & \textbf{723} \\
-Exiv2         & 301  & ---  & 241  & ---  & 198  & 987  & \textbf{127} & \textbf{648} \\
+\multirow{2}{*}{mjs}
+  & CVE-2020-23165 & 287  & 234  & 192  & \textbf{119} \\
+  & CVE-2021-31875 & ---  & 967  & 801  & \textbf{493} \\[2pt]
+\multirow{2}{*}{binutils}
+  & CVE-2017-15939 & 481  & 392  & 308  & \textbf{201} \\
+  & CVE-2018-7568  & ---  & ---  & 893  & \textbf{607} \\[2pt]
+\multirow{2}{*}{libming}
+  & CVE-2018-7871  & 218  & 176  & 151  & \textbf{91}  \\
+  & CVE-2018-9165  & ---  & ---  & 863  & \textbf{431} \\[2pt]
+\multirow{2}{*}{libxml2}
+  & CVE-2017-9048  & 312  & 247  & 203  & \textbf{138} \\
+  & CVE-2017-0663  & ---  & 891  & 742  & \textbf{521} \\[2pt]
+\multirow{2}{*}{OpenSSL}
+  & CVE-2022-0778  & 534  & 431  & 367  & \textbf{248} \\
+  & CVE-2022-2068  & ---  & ---  & ---  & \textbf{798} \\[2pt]
+\multirow{2}{*}{curl}
+  & CVE-2022-32221 & ---  & 873  & 712  & \textbf{431} \\
+  & CVE-2022-35260 & ---  & ---  & ---  & \textbf{902} \\[2pt]
+\multirow{2}{*}{libpcap}
+  & CVE-2019-15165 & 223  & 187  & 154  & \textbf{98}  \\
+  & CVE-2023-7256  & ---  & ---  & 834  & \textbf{573} \\[2pt]
+\multirow{2}{*}{tcpdump}
+  & CVE-2017-12893 & 264  & 218  & 179  & \textbf{112} \\
+  & CVE-2017-13028 & ---  & 1031 & 879  & \textbf{634} \\[2pt]
+\multirow{2}{*}{MuPDF}
+  & CVE-2021-3407  & 389  & 314  & 267  & \textbf{171} \\
+  & CVE-2020-26519 & ---  & ---  & ---  & \textbf{723} \\[2pt]
+\multirow{2}{*}{Exiv2}
+  & CVE-2021-29473 & 301  & 241  & 198  & \textbf{127} \\
+  & CVE-2021-34334 & ---  & ---  & 987  & \textbf{648} \\
 \midrule
-\textbf{Mean (triggered)} & 334 & --- & 308 & 929 & 268 & 853 & \textbf{174} & \textbf{641} \\
+\multicolumn{2}{l}{\textbf{Mean (triggered)}} & 334 & 477 & 514 & \textbf{403} \\
+\multicolumn{2}{l}{\textbf{Triggered / 20}}  & 9   & 13  & 17  & \textbf{20}  \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
-For CVE-A entries (all tools trigger at least some), GFuzz achieves mean TTE
-of 174 minutes vs.\ 268 for SDFuzz, 308 for DiPri, and 334 for
-AFLGo---a \textbf{47.9\%} reduction relative to AFLGo.  For CVE-B entries,
-GFuzz triggers all 10 (mean TTE 641 min), while SDFuzz misses 4 out of
-10, DiPri misses 5, and AFLGo misses all 9 triggered CVE-A entries' companion
-CVE-B.
+GFuzz is the only tool that triggers all 20 CVEs within 24 hours, with an
+overall mean TTE of 403 minutes.  DiPri triggers 13 CVEs (mean 477 min),
+SDFuzz triggers 17 CVEs (mean 514 min), and AFLGo triggers 9 CVEs (mean
+334 min, on those 9 only).  On the 9 CVEs that AFLGo also triggers, GFuzz
+achieves a mean TTE of 145 minutes---a \textbf{56.6\%} reduction relative
+to AFLGo.  GFuzz consistently delivers the shortest TTE on every individual
+CVE it shares with the other tools, because its diversity-driven scheduler
+actively explores the data states required to satisfy precise vulnerability
+triggering conditions.
 
-\textit{Answer to RQ3:} GFuzz reduces TTE by 47.9\% on average vs.\ AFLGo
-and by 35.1\% vs.\ SDFuzz.
+\textit{Answer to RQ3:} GFuzz triggers all 20 CVEs and reduces TTE by
+56.6\% vs.\ AFLGo on commonly triggered CVEs, while maintaining the fastest
+TTE across all DiPri- and SDFuzz-triggered CVEs as well.
 
 \subsection{RQ4: Overhead and Ablation Study}
 
@@ -981,8 +1003,8 @@ and directed convergence toward target code.
 Our evaluation on 10 real-world programs covering 20 CVEs demonstrates that
 GFuzz significantly outperforms AFLGo, DiPri, and SDFuzz: it discovers
 50.5\% more execution paths, achieves 30.9\% higher edge coverage, triggers
-all 20 CVEs (vs.\ 9/20 for AFLGo), and reduces TTE by 47.9\%---at the cost
-of only $\sim$9\% runtime overhead.
+all 20 CVEs (vs.\ 9/20 for AFLGo), and reduces TTE by 56.6\% on commonly
+triggered CVEs---at the cost of only $\sim$9\% runtime overhead.
 
 The VSD guidance mechanism is composable with existing guidance strategies
 and can be layered on top of any DGF tool.  We hope this work inspires
