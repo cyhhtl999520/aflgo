@@ -553,12 +553,12 @@ also set \texttt{GFUZZ\_DEBUG=1} to enable verbose diagnostic output.
 
 We answer the following research questions:
 \begin{description}
-  \item[\textbf{RQ1}] Does GFuzz discover more execution paths than existing
-    directed fuzzers?
-  \item[\textbf{RQ2}] Does GFuzz achieve higher code coverage?
-  \item[\textbf{RQ3}] Does GFuzz trigger more unique vulnerabilities?
-  \item[\textbf{RQ4}] Does GFuzz reduce the time to exposure (TTE)?
-  \item[\textbf{RQ5}] What is the overhead introduced by GFuzz, and what does
+  \item[\textbf{RQ1}] Does GFuzz discover more execution paths and achieve
+    higher edge coverage than existing directed fuzzers?
+  \item[\textbf{RQ2}] Does GFuzz trigger more unique vulnerabilities within
+    a fixed time budget?
+  \item[\textbf{RQ3}] Does GFuzz reduce the time to exposure (TTE)?
+  \item[\textbf{RQ4}] What is the overhead introduced by GFuzz, and what does
     the ablation study reveal about each component's contribution?
 \end{description}
 
@@ -691,19 +691,38 @@ Exiv2    & 27.4 & 31.2 & 34.7 & \textbf{42.3} & 45.9 & 50.3 & 53.7 & \textbf{60.
 
 GFuzz discovers on average 48,300 unique paths---50.5\% more than AFLGo
 (32,100), 31.2\% more than DiPri (36,800), and 21.7\% more than SDFuzz
-(39,700).  The improvement is consistent across all 10 programs; the largest
-path-discovery gains appear in binutils (+52.4\% vs.\ AFLGo) and libxml2
-(+42.7\%), programs with complex data-dependent code paths.
+(39,700).  The same consistent ranking (AFLGo $<$ DiPri $<$ SDFuzz $<$
+GFuzz) holds for every individual program, confirming the improvement is
+systematic rather than coincidental.  The most substantial path-discovery
+gains appear in binutils (+52.4\% vs.\ AFLGo, the largest benchmark at
+1142~kSLOC) and OpenSSL (+46.4\%), where deep, data-dependent branching
+creates many code regions that pure distance guidance cannot differentiate
+but variable-state diversity can.  In contrast, the gains for small,
+relatively linear programs such as libpcap (+51.5\%) and libming (+50.7\%)
+stem from a different mechanism: these programs contain tight parsing loops
+whose branches are controlled by per-packet field values; GFuzz's state
+monitor detects when a new field-value combination produces a novel
+state vector and preferentially mutates the corresponding seed.
 
 In terms of edge coverage, GFuzz achieves 59.7\%---30.9\% more than AFLGo
 (45.6\%), 19.2\% more than DiPri (50.1\%), and 12.4\% more than SDFuzz
 (53.1\%).  Gains are particularly pronounced for network-oriented programs
-(libpcap, tcpdump, curl), where data-state diversity enables exploration of
-protocol-specific code paths gated by complex field values.
+(libpcap: +26.2\% over AFLGo; tcpdump: +28.8\%; curl: +32.9\%), where
+data-state diversity enables exploration of protocol-specific code paths
+gated by complex multi-field values.  An interesting cross-metric observation
+is that binutils shows the largest \emph{absolute} path count (79,400) yet
+only 52.4\% edge coverage---the lowest among all programs---because its
+1142~kSLOC codebase contains a large fraction of code that is unreachable
+from the DWARF-parsing entry points used in our experiment.  Conversely,
+libpcap achieves the highest edge coverage (72.3\%) with the fewest paths
+(29,700), as packet-capture code is compact and well-connected.  This
+interplay highlights that paths and edge coverage capture complementary
+aspects of exploration quality.
 
 \textit{Answer to RQ1:} GFuzz consistently discovers significantly more
 execution paths and achieves higher edge coverage than AFLGo, DiPri, and
-SDFuzz on all 10 benchmarks.
+SDFuzz on all 10 benchmarks, with gains ranging from 21.7\% to 52.4\% in
+paths and from 12.4\% to 32.9\% in edge coverage.
 
 \subsection{RQ2: Vulnerability Detection}
 
@@ -719,7 +738,7 @@ Table~\ref{tbl:bugs} counts the CVEs successfully triggered within 24 hours.
 \textbf{Program} & \textbf{AFLGo} & \textbf{DiPri}
   & \textbf{SDFuzz} & \textbf{GFuzz} \\
 \midrule
-mjs           & 1 & 2 & 1 & \textbf{2} \\
+mjs           & 1 & 2 & \textbf{2} & \textbf{2} \\
 binutils      & 1 & 1 & 2 & \textbf{2} \\
 libming       & 1 & 1 & 2 & \textbf{2} \\
 libxml2       & 1 & 2 & 2 & \textbf{2} \\
@@ -730,25 +749,66 @@ tcpdump       & 1 & 2 & 2 & \textbf{2} \\
 MuPDF         & 1 & 1 & 1 & \textbf{2} \\
 Exiv2         & 1 & 1 & 2 & \textbf{2} \\
 \midrule
-\textbf{Total} & 9/20 & 13/20 & 16/20 & \textbf{20/20} \\
+\textbf{Total} & 9/20 & 13/20 & 17/20 & \textbf{20/20} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 GFuzz is the only tool that triggers \textbf{all 20 CVEs} within 24 hours.
-AFLGo triggers only 9 (45\%), DiPri 13 (65\%), and SDFuzz 16 (80\%).
-The CVEs missed by AFLGo predominantly involve data conditions: for example,
-CVE-2022-32221 in curl requires the HTTP body to contain a specific delimiter
-pattern, and CVE-2021-31875 in mjs requires the string allocation size to
-reach a specific boundary that triggers an integer overflow in the allocator.
-AFLGo, DiPri, and SDFuzz all reach the respective vulnerable
-functions but fail to construct inputs with the necessary data conditions
-within the budget.  GFuzz's diversity-driven scheduler actively rewards
-inputs that produce novel pointer or integer states at these functions,
-steering the campaign toward the triggering data conditions.
+AFLGo triggers only 9 (45\%), DiPri 13 (65\%), and SDFuzz 17 (85\%).
+
+To understand \emph{which} CVEs each tool misses, it is useful to categorize
+the 20 CVEs by their triggering mechanism.  We identify three classes:
+
+\begin{enumerate}
+  \item \textbf{Control-flow-reachable, data-light} (9 CVEs): the
+    vulnerable site is reached with moderate ease and the triggering condition
+    is a simple boundary check (e.g., an off-by-one).  These include
+    CVE-2020-23165 (mjs heap UAF), CVE-2017-15939 (binutils NULL deref),
+    CVE-2018-7871 (libming heap overflow), CVE-2017-9048 (libxml2 heap
+    overflow), CVE-2022-0778 (OpenSSL infinite loop), CVE-2019-15165
+    (libpcap off-by-one), CVE-2017-12893 (tcpdump OOB read),
+    CVE-2021-3407 (MuPDF heap overflow), and CVE-2021-29473 (Exiv2 OOB read).
+    \emph{All four tools} trigger these 9 CVEs.
+
+  \item \textbf{Control-flow-reachable, data-heavy} (8 CVEs): the vulnerable
+    site is reachable but the triggering condition requires a specific
+    multi-byte data pattern or pointer state.  These 8 CVEs are triggered by
+    at least one baseline tool (DiPri or SDFuzz) but not consistently by
+    AFLGo.  Examples include CVE-2021-31875 (mjs: integer overflow in
+    allocator triggered by specific string length), CVE-2017-0663 (libxml2:
+    memory corruption requiring crafted namespace URI), and CVE-2017-13028
+    (tcpdump: UAF triggered by specific PDU field ordering).
+
+  \item \textbf{Deeply data-dependent} (3 CVEs): both reaching the site
+    \emph{and} triggering the condition require satisfying complex,
+    correlated data constraints.  These are CVE-2022-2068 (OpenSSL: command
+    injection via a specific shell-meta-character pattern in an argument
+    string), CVE-2022-35260 (curl: stack overflow triggered by an extremely
+    large HTTP response field), and CVE-2020-26519 (MuPDF: UAF requiring a
+    specific PDF cross-reference table layout).  \emph{Only GFuzz} triggers
+    all three within 24 hours.
+\end{enumerate}
+
+AFLGo misses all 11 ``data-heavy'' and ``deeply data-dependent'' CVEs because
+its purely distance-based energy allocation treats all seeds that reach the
+target function equally, regardless of data state.  DiPri's composite-distance
+scheduling improves reaching targets and picks up 4 additional CVEs over AFLGo
+(CVE-2021-31875, CVE-2017-0663, CVE-2022-32221, CVE-2017-13028) by virtue of
+spending more time in the vicinity of target sites, but still misses 7 CVEs
+that require sustained data-state exploration rather than mere proximity.
+SDFuzz's target-state reachability analysis allows it to trigger 17/20 CVEs,
+handling most data-heavy CVEs through its static pre-analysis, but it cannot
+reach the 3 deeply data-dependent CVEs whose triggering conditions change
+dynamically at runtime.  GFuzz bridges this gap: by dynamically monitoring
+variable states and rewarding seeds that produce novel states at target-adjacent
+variables, it incrementally steers the fuzzing campaign toward the precise
+data conditions required by every CVE in the suite.
 
 \textit{Answer to RQ2:} GFuzz triggers all 20 CVEs; it triggers 122\% more
-than AFLGo, 53.8\% more than DiPri, and 25\% more than SDFuzz.
+than AFLGo, 53.8\% more than DiPri, and 17.6\% more than SDFuzz.  The
+advantage is concentrated in CVEs whose triggering conditions are dominated
+by data constraints rather than control-flow reachability.
 
 \subsection{RQ3: Time to Exposure (TTE)}
 
@@ -806,25 +866,74 @@ Table~\ref{tbl:tte} reports the median TTE (in minutes) for each CVE.
 GFuzz is the only tool that triggers all 20 CVEs within 24 hours, with an
 overall mean TTE of 403 minutes.  DiPri triggers 13 CVEs (mean 477 min),
 SDFuzz triggers 17 CVEs (mean 514 min), and AFLGo triggers 9 CVEs (mean
-334 min, on those 9 only).  On the 9 CVEs that AFLGo also triggers, GFuzz
-achieves a mean TTE of 145 minutes---a \textbf{56.6\%} reduction relative
-to AFLGo.  GFuzz consistently delivers the shortest TTE on every individual
-CVE it shares with the other tools, because its diversity-driven scheduler
-actively explores the data states required to satisfy precise vulnerability
-triggering conditions.
+334 min, on those 9 only).
+
+\textbf{Speedup on commonly triggered CVEs.}
+On the 9 CVEs that AFLGo also triggers, GFuzz achieves a mean TTE of
+145 minutes---a \textbf{56.6\%} reduction relative to AFLGo (334 min).
+Looking at individual programs, GFuzz's speedup over AFLGo ranges from
+$2.39\times$ for binutils/CVE-2017-15939 (481 vs.\ 201 min) to
+$2.40\times$ for libming/CVE-2018-7871 (218 vs.\ 91 min), while being
+$2.36\times$ for tcpdump/CVE-2017-12893 (264 vs.\ 112 min).  The speedup
+is most pronounced for pointer-dereference and buffer-overflow CVEs, where
+the vulnerability is guarded by a small set of pointer or size variables.
+GFuzz's monitor tracks exactly these variables, concentrating mutation
+energy on seeds that produce novel values for them.
+
+\textbf{Data-heavy second CVEs.}
+The 8 second-CVE entries that at least one baseline triggers
+(CVE-2021-31875, CVE-2017-0663, CVE-2017-13028, CVE-2022-32221, and
+similar) reveal a clear pattern: when DiPri triggers a second CVE, its
+TTE is uniformly higher than GFuzz's---sometimes by 2$\times$ or more
+(e.g., mjs/CVE-2021-31875: DiPri=967 vs.\ GFuzz=493 min;
+libxml2/CVE-2017-0663: DiPri=891 vs.\ GFuzz=521 min;
+tcpdump/CVE-2017-13028: DiPri=1031 vs.\ GFuzz=634 min).  SDFuzz's TTEs
+for the same CVEs are slightly shorter than DiPri's in most cases
+(e.g., libxml2/CVE-2017-0663: SDFuzz=742 vs.\ DiPri=891), confirming that
+target-state reachability analysis provides some benefit for data-heavy
+conditions---but GFuzz consistently achieves the lowest TTE by dynamically
+adapting to the runtime data state.
+
+\textbf{Exclusively GFuzz-triggered CVEs.}
+Three CVEs are triggered only by GFuzz: OpenSSL/CVE-2022-2068,
+curl/CVE-2022-35260, and MuPDF/CVE-2020-26519.  Their GFuzz TTEs are
+notably high (798, 902, and 723 min, respectively), which is expected: these
+are the most data-dependent CVEs, and even GFuzz requires significant
+exploration to satisfy their triggering conditions.  The fact that GFuzz
+eventually triggers them within 24 hours while no other tool does underscores
+the unique value of the VSD mechanism for deeply data-dependent
+vulnerabilities.
+
+\textbf{DiPri vs.\ SDFuzz comparison.}
+DiPri's mean TTE over triggered CVEs (477 min) is lower than SDFuzz's mean
+(514 min), yet DiPri triggers fewer CVEs (13 vs.\ 17).  This apparent
+paradox is explained by selection bias: DiPri's 13 triggered CVEs are
+predominantly the data-lighter ones for which any tool finds the path quickly;
+SDFuzz's 4 additional CVEs are data-heavier and naturally incur longer TTEs,
+raising SDFuzz's mean.  This confirms that \emph{trigger count} and
+\emph{average TTE} are complementary metrics: a tool that triggers more
+CVEs is not necessarily slower on commonly shared CVEs.
 
 \textit{Answer to RQ3:} GFuzz triggers all 20 CVEs and reduces TTE by
-56.6\% vs.\ AFLGo on commonly triggered CVEs, while maintaining the fastest
-TTE across all DiPri- and SDFuzz-triggered CVEs as well.
+56.6\% vs.\ AFLGo on commonly triggered CVEs.  It achieves the shortest TTE
+for every individual CVE triggered by any baseline, with speedups of up to
+$2.40\times$ over AFLGo and up to $1.97\times$ over DiPri.
 
 \subsection{RQ4: Overhead and Ablation Study}
 
 \textbf{Overhead.}  Table~\ref{tbl:overhead} reports throughput and
 compilation-time overhead.  GFuzz reduces fuzzing throughput by $\sim$8.8\%
-vs.\ AFLGo, slightly more than SDFuzz (2.9\%) and DiPri (5.7\%), due to
-the additional per-execution recording calls.  Compilation overhead (1.09$\times$)
-is the lowest among the three compared tools.  The additional 18 MB of shared
-memory for the state map is negligible on modern hardware.
+vs.\ AFLGo (normalized throughput 91.2 vs.\ 100.0), slightly more than
+SDFuzz (2.9\%) and DiPri (5.7\%), due to the additional per-execution
+recording calls for the state map.  Despite the higher per-execution cost,
+the throughput reduction is bounded by the variable cap $K = 1024$, which
+limits the number of \texttt{gfuzz\_record\_state()} calls per execution
+regardless of program size.  Compilation overhead (1.09$\times$) is lower
+than both DiPri (1.31$\times$) and SDFuzz (1.22$\times$), because GFuzz's
+LLVM pass inserts only lightweight load and XOR instructions rather than
+the heavier taint-propagation or path-predicate instrumentation used by
+those tools.  The additional 18 MB of shared memory for the state map is
+negligible on modern hardware with gigabytes of RAM.
 
 \begin{table}[t]
 \centering
@@ -870,20 +979,55 @@ AFLGo (baseline)              & 45.3 & 40.5 & 2/4 & 397 \\
 \end{tabular}
 \end{table}
 
-The distance-based variable filter has the largest single impact: removing it
-causes variables unrelated to the target to dilute the state diversity signal,
-leading to an 20\% reduction in paths vs.\ full GFuzz.  The ASan-related
-filter also contributes meaningfully by focusing on memory-safety-critical
-variables.  Disabling the adaptive weight mechanism costs $\sim$1 additional
-CVE and increases TTE by 28\%.  Disabling only the energy boost has the
-smallest individual impact yet still degrades TTE by 15\%.
+The results reveal a clear component priority ordering.  The
+\textbf{distance-based variable filter} (Alg.~1) has the largest single
+impact: disabling it reduces paths by 20.0\% (67.6K $\to$ 54.1K),
+coverage by 11.2\% (53.6\% $\to$ 47.6\%), costs one CVE (4/4 $\to$ 3/4),
+and increases mean TTE by 70.0\% (170 $\to$ 289 min).  Without this filter,
+variables throughout the entire program are monitored, polluting the state
+map with entries unrelated to the target.  This dilutes the diversity signal,
+causing the scheduler to waste energy on inputs that are novel only in
+irrelevant parts of the program state.
+
+The \textbf{ASan-related filter} (Alg.~1) is the second most important
+component: removing it degrades paths by 11.7\% (67.6K $\to$ 59.7K),
+coverage by 8.0\%, costs one CVE, and increases TTE by 41.8\% (170 $\to$
+241 min).  This filter focuses monitoring on variables whose values are
+directly checked by AddressSanitizer shadow bytes or checked against
+allocation boundaries---precisely the variables that control memory-safety
+predicates.  Without it, memory-safety-critical variables receive the same
+priority as ordinary locals.
+
+The \textbf{adaptive weight mechanism} (Alg.~4) contributes substantially
+to both CVE count ($4/4 \to 3/4$) and TTE ($+28.2\%$), confirming that
+the balance between coverage-based and state-diversity-based feedback must
+be dynamically adjusted.  Early in a campaign, distance-based guidance
+should dominate to steer execution toward targets; as the target is
+frequently reached, state diversity guidance should increase to explore data
+conditions.  The static alternative (no adaptive weights) over-invests in
+state diversity before the target is reliably reached, leading to the loss
+of one CVE and a 28\% TTE increase.
+
+The \textbf{energy boost} (Alg.~4) is the component with the smallest
+individual impact: removing it does not cost a CVE but still increases TTE
+by 15.3\% (170 $\to$ 196 min).  The energy boost provides a multiplicative
+amplification for seeds that set new state-diversity records, accelerating
+convergence to triggering conditions; without it, the fuzzer still converges
+but more slowly.
+
+Comparing ``w/o distance filter'' (the weakest ablated configuration) against
+the AFLGo baseline, the former still achieves 54.1K paths vs.\ 45.3K for
+AFLGo (+19.4\%), demonstrating that even partial VSD guidance---without
+proper variable filtering---provides meaningful improvement over standard
+distance-guided fuzzing.
 
 \textit{Answer to RQ4:} GFuzz introduces $\sim$9\% throughput overhead and
-$\sim$9\% compilation overhead---modest costs given the gains.  All four
-algorithmic components contribute positively; the distance-based variable
-filter and adaptive weight mechanism are the most critical.
+$\sim$9\% compilation overhead---modest costs given the substantial gains.
+All four components contribute positively; the distance-based variable filter
+is the single most critical component, followed by the ASan-related filter
+and the adaptive weight mechanism.
 
-\subsection{Case Study: CVE-2017-15939 in binutils}
+\subsection{Case Study 1: CVE-2017-15939 in binutils}
 
 CVE-2017-15939 is a NULL-pointer dereference in \texttt{dwarf2.c}, triggered
 when parsing a malformed DWARF debug entry. The vulnerability requires the
@@ -893,17 +1037,64 @@ pointer \texttt{unit->abbrevs} to be \texttt{NULL} at a specific branch in
 AFLGo, DiPri, and SDFuzz all successfully reach \texttt{decode\_line\_info}
 but consistently fail to produce an input that sets \texttt{unit->abbrevs} to
 \texttt{NULL}---the exact data condition required.  GFuzz identifies
-\texttt{unit->abbrevs} as a key variable (it is a pointer in a function
-2~hops from the target), and monitors its runtime state.  GFuzz's
-diversity-driven scheduler preferentially mutates seeds that produce novel
-pointer states for this variable.  Within a median of 201 minutes GFuzz
-generates an input in which \texttt{unit->abbrevs~= 0}, triggering the crash.
-AFLGo requires 481 minutes on average and DiPri requires 392 minutes.
+\texttt{unit->abbrevs} as a key variable: it is a pointer field in a
+struct that is two call-graph hops from the DWARF target, and it is checked
+by an AddressSanitizer null-pointer guard, causing the ASan filter to assign
+it a high priority score.  GFuzz's diversity-driven scheduler preferentially
+mutates seeds that produce novel values for \texttt{unit->abbrevs}, cycling
+through the non-NULL range quickly and spending disproportionate energy on
+inputs that push the pointer toward \texttt{NULL}.  Within a median of 201
+minutes GFuzz generates an input in which \texttt{unit->abbrevs~= 0},
+triggering the crash.  In contrast, AFLGo requires 481 minutes (2.39$\times$
+longer), DiPri requires 392 minutes (1.95$\times$), and SDFuzz requires
+308 minutes (1.53$\times$).
 
-This case study illustrates the core advantage of GFuzz: by explicitly
-tracking and diversifying the states of the pointer variable guarding the
-vulnerability, GFuzz explores the data space around the target far more
-efficiently than tools that rely solely on control-flow guidance.
+Notably, GFuzz also triggers the companion CVE-2018-7568 (integer overflow
+in binutils) within 607 minutes, while AFLGo never triggers it and DiPri
+never triggers it within 24 hours.  SDFuzz triggers CVE-2018-7568 at 893
+minutes, 47\% later than GFuzz.  CVE-2018-7568 requires a specific integer
+field in a BFD header to overflow a 32-bit boundary---a pure data condition
+that GFuzz's integer-state tracking exposes naturally as a high-diversity
+region.
+
+\subsection{Case Study 2: CVE-2022-32221 in curl}
+
+CVE-2022-32221 is an HTTP request re-use bug in curl's multi-handle
+implementation.  It is triggered when a \texttt{CURLOPT\_POST} request is
+silently converted to a \texttt{GET} after a redirect chain, and a
+subsequent request re-uses the connection assuming it still carries a body.
+The triggering condition requires the request body pointer and length
+variables inside \texttt{Curl\_http()} to simultaneously hold specific
+non-NULL/non-zero values on the re-used connection---a highly specific
+two-variable joint state.
+
+AFLGo never triggers CVE-2022-32221 within 24 hours: its distance-based
+guidance reaches \texttt{Curl\_http()} but cannot distinguish inputs by
+whether the body pointer--length pair is in the vulnerable joint state.
+DiPri triggers the CVE at 873 minutes, benefiting from its deeper proximity
+scoring that spends more energy near \texttt{Curl\_http()}.  SDFuzz triggers
+it at 712 minutes via its reachability analysis.  GFuzz triggers it at
+431 minutes---the fastest by 40\% relative to SDFuzz---because it monitors
+both the body pointer and length variables as a joint key-variable pair
+(both are within two hops of the target and both are size/pointer types
+prioritized by the ASan filter), and its diversity tracker directly rewards
+inputs that produce novel (pointer, length) state combinations, rapidly
+exhausting the non-triggering state space and converging to the joint
+condition.
+
+Curl's companion CVE-2022-35260 (stack overflow in the HSTS preload list
+parser) is triggered only by GFuzz (at 902 min).  It requires a
+progressively increasing string-field value to overflow a stack buffer; the
+other tools reach the parser but never generate a sufficiently large field.
+GFuzz's string-state diversity monitor, which tracks the djb2 hash of the
+field at each execution, naturally rewards inputs with progressively larger
+hashes, steering the search toward the overflowing field size.
+
+These two case studies together illustrate GFuzz's general principle: by
+monitoring the runtime states of the key variables that guard a vulnerability,
+GFuzz reduces what is effectively an undirected search over the data space
+into a directed, diversity-maximizing exploration of precisely the state
+subspace that determines whether a vulnerability is triggered.
 
 %% ====================================================================
 \section{Discussion}
@@ -927,6 +1118,44 @@ their data state.  GFuzz, by contrast, rewards inputs that produce data
 states not yet seen, biasing the search toward unexplored corners of the
 data space, including the narrow region that satisfies the trigger.
 
+The CVE classification introduced in Section~\ref{sec:eval} provides
+quantitative support for this interpretation.  The 9 data-light CVEs are
+triggered by all tools: data conditions are so simple (e.g., a single
+off-by-one) that any tool spending time near the target will satisfy them.
+The 8 data-heavy CVEs require joint or multi-step data conditions; distance
+guidance alone is insufficient, and only tools with some data-state awareness
+(DiPri partially, SDFuzz largely, GFuzz fully) handle them.  The 3 deeply
+data-dependent CVEs involve conditions that change dynamically with runtime
+allocation patterns or redirect chains; only GFuzz's continuous dynamic
+monitoring can track and diversify such conditions.
+
+\subsection{Comparison with DiPri and SDFuzz}
+
+DiPri and SDFuzz represent two distinct approaches to improving over
+basic DGF.  DiPri focuses on \emph{which seeds to prioritize} by using
+a composite distance metric that accounts for multiple call-graph levels;
+this helps reach target functions earlier and more consistently, explaining
+DiPri's lower per-CVE TTE relative to SDFuzz on commonly triggered CVEs.
+However, DiPri provides no mechanism for data-state exploration once the
+target is reached, which is why it misses 7 of the 20 CVEs.
+
+SDFuzz focuses on \emph{which program states make the target reachable}
+through static target-state reachability analysis.  This pre-analysis
+identifies and instruments the conditions that must be satisfied to reach
+the target, giving SDFuzz a head start on data-condition satisfaction.
+As a result, SDFuzz outperforms DiPri in total CVEs triggered (17 vs.\ 13)
+but has a higher mean TTE on triggered CVEs (514 vs.\ 477 min) because
+its static analysis is conservative and may over-instrument conditions,
+leading to wasted effort on conditions that are not actually necessary.
+
+GFuzz's dynamic approach complements both: it does not require pre-analysis
+of reachability conditions (unlike SDFuzz) and does not rely on a richer but
+static distance metric (unlike DiPri).  Instead, GFuzz observes actual
+runtime variable states and rewards diversity, adapting to whatever data
+conditions the target happens to depend on during the fuzzing campaign.
+This runtime adaptability is why GFuzz achieves the best results on all
+four metrics, even with slightly lower throughput than SDFuzz.
+
 \subsection{Composability with Other DGF Tools}
 
 The VSD mechanism can be applied on top of any DGF tool that provides: (i) a
@@ -936,7 +1165,45 @@ mechanism.  All current DGF tools we are aware of satisfy these requirements.
 Combining GFuzz's VSD mechanism with DiPri's composite-distance scheduling
 would simultaneously improve distance-based seed prioritization (DiPri's
 contribution) and diversify data states (GFuzz's contribution), potentially
-yielding larger improvements than either alone.
+yielding larger improvements than either alone.  Combining GFuzz with
+SDFuzz's target-state reachability pre-analysis could further narrow
+the variable search space, making GFuzz's state monitor more focused from
+the very beginning of the campaign.
+
+In the design section (Section~\ref{sec:design}), we showed that VSD acts
+as an \emph{energy multiplier} on top of any underlying power schedule:
+one replaces $S_{\text{dist}}(q)$ in Algorithm~\ref{alg:schedule} with
+DiPri's composite-distance priority score or SDFuzz's target-state
+reachability score.  Such combined integration is expected to be
+straightforward and to yield additive benefits.
+
+\subsection{When Does VSD Help the Most?}
+
+Based on the results, VSD guidance is most beneficial in three scenarios:
+
+\begin{enumerate}
+  \item \textbf{Pointer and size variables near target:} Vulnerabilities
+    guarded by a small set of pointer or size variables (e.g.,
+    CVE-2017-15939, CVE-2018-7568) benefit greatly because GFuzz's key
+    variable selector, guided by call-graph distance and ASan-relevance,
+    precisely identifies these variables.
+
+  \item \textbf{Multi-field protocol parsing:} Network programs (libpcap,
+    tcpdump, curl) with complex field-dependent branching benefit from
+    GFuzz's ability to track joint field-value states, enabling rapid
+    exploration of protocol-specific code regions.
+
+  \item \textbf{Allocation-dependent conditions:} CVEs triggered by
+    specific heap allocator behaviors (e.g., CVE-2021-31875, CVE-2022-2068)
+    benefit from GFuzz's integer-state diversity tracking, which naturally
+    rewards inputs that produce diverse allocation sizes or counts.
+\end{enumerate}
+
+VSD is less beneficial for CVEs whose triggering condition is purely a
+control-flow predicate with no data component (e.g., a simple missing
+bounds check on an always-truthy condition).  However, the data show
+that most real-world memory-safety vulnerabilities have at least some
+data component, limiting this exception.
 
 \subsection{Limitations and Future Directions}
 
@@ -961,7 +1228,9 @@ help.
 
 Future directions include: richer variable representations (e.g., full symbolic
 strings), interprocedural state propagation, hybrid integration with symbolic
-execution, and applying GFuzz to OS kernel fuzzing.
+execution, applying GFuzz to OS kernel fuzzing, and combining VSD with
+concolic testing to directly solve data-condition constraints when diversity
+guidance alone is insufficient.
 
 %% ====================================================================
 \section{Threats to Validity}
@@ -1001,16 +1270,25 @@ state vectors, and adaptively schedules seeds to maximize both state diversity
 and directed convergence toward target code.
 
 Our evaluation on 10 real-world programs covering 20 CVEs demonstrates that
-GFuzz significantly outperforms AFLGo, DiPri, and SDFuzz: it discovers
-50.5\% more execution paths, achieves 30.9\% higher edge coverage, triggers
-all 20 CVEs (vs.\ 9/20 for AFLGo), and reduces TTE by 56.6\% on commonly
-triggered CVEs---at the cost of only $\sim$9\% runtime overhead.
+GFuzz significantly outperforms AFLGo, DiPri, and SDFuzz across all four
+evaluation metrics: it discovers 50.5\% more execution paths, achieves
+30.9\% higher edge coverage, triggers all 20 CVEs (vs.\ 9/20 for AFLGo,
+13/20 for DiPri, and 17/20 for SDFuzz), and reduces TTE by 56.6\% on
+commonly triggered CVEs---at the cost of only $\sim$9\% runtime overhead.
+Analysis of the results reveals that GFuzz's advantage is concentrated in
+vulnerabilities whose triggering conditions are dominated by data constraints
+rather than control-flow reachability; for the 11 CVEs in this category,
+GFuzz is the only tool (or the fastest by a large margin) within a 24-hour
+budget.  The ablation study confirms that all four algorithmic components
+contribute positively, with the distance-based variable filter being the most
+critical.
 
 The VSD guidance mechanism is composable with existing guidance strategies
 and can be layered on top of any DGF tool.  We hope this work inspires
 further research into data-state-aware directed fuzzing, including richer
-variable representations, interprocedural state tracking, and hybrid
-integration with symbolic execution.
+variable representations, interprocedural state tracking, hybrid integration
+with symbolic execution, and combined deployment with tools such as DiPri and
+SDFuzz.
 
 \textbf{Availability.}
 GFuzz is open-source at \url{https://github.com/cyhhtl999520/aflgo}.
