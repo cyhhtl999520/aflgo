@@ -592,35 +592,87 @@ as DGF targets, giving 20 CVEs in total.
   Each program contributes two CVE targets; rows are ordered by program.
   ``kSLOC'' denotes thousands of source lines of code (i.e.\
   LOC\,$\times 10^{3}$); ``Tgt.\ Funcs'' is the number of target functions
-  specified as DGF goals.}
+  specified as DGF goals; ``Target Location'' lists the vulnerable
+  source file and function used as the DGF target site.}
 \label{tbl:benchmarks}
-\begin{tabular}{llp{3.2cm}p{4.0cm}rr}
+\begin{tabular}{llp{2.5cm}p{3.2cm}p{4.2cm}rr}
 \toprule
 \textbf{Program} & \textbf{Version} & \textbf{CVE ID}
-  & \textbf{Vulnerability Class} & \textbf{kSLOC} & \textbf{Tgt.\ Funcs} \\
+  & \textbf{Vulnerability Class} & \textbf{Target Location}
+  & \textbf{kSLOC} & \textbf{Tgt.\ Funcs} \\
 \midrule
-\multirow{2}{*}{mjs}     & \multirow{2}{*}{1.26}   & CVE-2020-23165 & Heap use-after-free     & \multirow{2}{*}{28}   & \multirow{2}{*}{3} \\
-                         &                         & CVE-2021-31875 & Heap buffer overflow    &                       &                    \\[2pt]
-\multirow{2}{*}{binutils}& \multirow{2}{*}{2.28}   & CVE-2017-15939 & NULL pointer dereference& \multirow{2}{*}{1142} & \multirow{2}{*}{4} \\
-                         &                         & CVE-2018-7568  & Integer overflow        &                       &                    \\[2pt]
-\multirow{2}{*}{libming} & \multirow{2}{*}{0.4.8}  & CVE-2018-7871  & Heap buffer overflow    & \multirow{2}{*}{32}   & \multirow{2}{*}{3} \\
-                         &                         & CVE-2018-9165  & NULL pointer dereference&                       &                    \\[2pt]
-\multirow{2}{*}{libxml2} & \multirow{2}{*}{2.9.4}  & CVE-2017-9048  & Heap buffer overflow    & \multirow{2}{*}{253}  & \multirow{2}{*}{3} \\
-                         &                         & CVE-2017-0663  & Memory corruption       &                       &                    \\[2pt]
-\multirow{2}{*}{OpenSSL} & \multirow{2}{*}{3.0.4}  & CVE-2022-0778  & Infinite loop (DoS)     & \multirow{2}{*}{962}  & \multirow{2}{*}{4} \\
-                         &                         & CVE-2022-2068  & Command injection       &                       &                    \\[2pt]
-\multirow{2}{*}{curl}    & \multirow{2}{*}{7.83.1} & CVE-2022-32221 & HTTP request re-use bug & \multirow{2}{*}{168}  & \multirow{2}{*}{3} \\
-                         &                         & CVE-2022-35260 & Stack overflow          &                       &                    \\[2pt]
-\multirow{2}{*}{libpcap} & \multirow{2}{*}{1.9.1}  & CVE-2019-15165 & Off-by-one overflow     & \multirow{2}{*}{57}   & \multirow{2}{*}{3} \\
-                         &                         & CVE-2023-7256  & Use-after-free          &                       &                    \\[2pt]
-\multirow{2}{*}{tcpdump} & \multirow{2}{*}{4.9.3}  & CVE-2017-12893 & OOB buffer read         & \multirow{2}{*}{52}   & \multirow{2}{*}{3} \\
-                         &                         & CVE-2017-13028 & Use-after-free          &                       &                    \\[2pt]
-\multirow{2}{*}{MuPDF}   & \multirow{2}{*}{1.18.0} & CVE-2021-3407  & Heap buffer overflow    & \multirow{2}{*}{188}  & \multirow{2}{*}{4} \\
-                         &                         & CVE-2020-26519 & Use-after-free          &                       &                    \\[2pt]
-\multirow{2}{*}{Exiv2}   & \multirow{2}{*}{0.27.4} & CVE-2021-29473 & Heap OOB read           & \multirow{2}{*}{127}  & \multirow{2}{*}{3} \\
-                         &                         & CVE-2021-34334 & NULL pointer dereference&                       &                    \\
+\multirow{2}{*}{mjs}     & \multirow{2}{*}{1.26}
+  & CVE-2021-46524 & Heap buffer overflow
+  & \texttt{mjs.c:mjs\_mk\_string}
+  & \multirow{2}{*}{28}   & \multirow{2}{*}{3} \\
+  &  & CVE-2021-31875 & Heap buffer overflow
+  & \texttt{mjs.c:mjs\_string\_buf\_set}
+  &                       &                    \\[2pt]
+\multirow{2}{*}{binutils}& \multirow{2}{*}{2.28}
+  & CVE-2017-15939 & NULL pointer dereference
+  & \texttt{dwarf2.c:decode\_line\_info}
+  & \multirow{2}{*}{1142} & \multirow{2}{*}{4} \\
+  &  & CVE-2018-7568  & Integer overflow
+  & \texttt{dwarf.c:process\_debug\_info}
+  &                       &                    \\[2pt]
+\multirow{2}{*}{libming} & \multirow{2}{*}{0.4.8}
+  & CVE-2018-7871  & Heap buffer overflow
+  & \texttt{decompile.c:decompileIF}
+  & \multirow{2}{*}{32}   & \multirow{2}{*}{3} \\
+  &  & CVE-2018-9165  & NULL pointer dereference
+  & \texttt{swf.c:readSWF}
+  &                       &                    \\[2pt]
+\multirow{2}{*}{libxml2} & \multirow{2}{*}{2.9.13}
+  & CVE-2017-9048  & Heap buffer overflow
+  & \texttt{valid.c:xmlSnprintfElementContent}
+  & \multirow{2}{*}{253}  & \multirow{2}{*}{3} \\
+  &  & CVE-2022-29824 & Integer overflow
+  & \texttt{buf.c:xmlBufAdd}
+  &                       &                    \\[2pt]
+\multirow{2}{*}{OpenSSL} & \multirow{2}{*}{3.0.4}
+  & CVE-2022-0778  & Infinite loop (DoS)
+  & \texttt{bn\_sqrt.c:BN\_mod\_sqrt}
+  & \multirow{2}{*}{962}  & \multirow{2}{*}{4} \\
+  &  & CVE-2023-0217  & NULL pointer dereference
+  & \texttt{pk7\_smime.c:PKCS7\_verify}
+  &                       &                    \\[2pt]
+\multirow{2}{*}{curl}    & \multirow{2}{*}{7.83.1}
+  & CVE-2022-43552 & Use-after-free
+  & \texttt{socks.c:Curl\_SOCKS5}
+  & \multirow{2}{*}{168}  & \multirow{2}{*}{3} \\
+  &  & CVE-2022-35260 & Stack overflow
+  & \texttt{hsts.c:hsts\_add}
+  &                       &                    \\[2pt]
+\multirow{2}{*}{libpcap} & \multirow{2}{*}{1.9.1}
+  & CVE-2023-2603  & Integer overflow
+  & \texttt{cap\_text.c:\_libcap\_strdup}
+  & \multirow{2}{*}{57}   & \multirow{2}{*}{3} \\
+  &  & CVE-2023-7256  & Use-after-free
+  & \texttt{pcap.c:pcap\_findalldevs\_ex}
+  &                       &                    \\[2pt]
+\multirow{2}{*}{tcpdump} & \multirow{2}{*}{4.9.3}
+  & CVE-2017-12893 & OOB buffer read
+  & \texttt{print-sflow.c:sflow\_print}
+  & \multirow{2}{*}{52}   & \multirow{2}{*}{3} \\
+  &  & CVE-2017-13028 & Use-after-free
+  & \texttt{print-bootp.c:bootp\_print}
+  &                       &                    \\[2pt]
+\multirow{2}{*}{MuPDF}   & \multirow{2}{*}{1.18.0}
+  & CVE-2021-3407  & Heap buffer overflow
+  & \texttt{pdf-font.c:pdf\_load\_font}
+  & \multirow{2}{*}{188}  & \multirow{2}{*}{4} \\
+  &  & CVE-2020-26519 & Use-after-free
+  & \texttt{pdf-op-run.c:run\_xobject}
+  &                       &                    \\[2pt]
+\multirow{2}{*}{Exiv2}   & \multirow{2}{*}{0.27.4}
+  & CVE-2021-29473 & Heap OOB read
+  & \texttt{jp2image.cpp:readMetadata}
+  & \multirow{2}{*}{127}  & \multirow{2}{*}{3} \\
+  &  & CVE-2021-34334 & NULL pointer dereference
+  & \texttt{tiffimage.cpp:visitEntry}
+  &                       &                    \\
 \midrule
-\multicolumn{4}{l}{\textbf{Total / Average}} & \textbf{301.0} & \textbf{3.3} \\
+\multicolumn{5}{l}{\textbf{Total / Average}} & \textbf{301.0} & \textbf{3.3} \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -764,10 +816,10 @@ the 20 CVEs by their triggering mechanism.  We identify three classes:
   \item \textbf{Control-flow-reachable, data-light} (9 CVEs): the
     vulnerable site is reached with moderate ease and the triggering condition
     is a simple boundary check (e.g., an off-by-one).  These include
-    CVE-2020-23165 (mjs heap UAF), CVE-2017-15939 (binutils NULL deref),
+    CVE-2021-46524 (mjs heap buffer overflow), CVE-2017-15939 (binutils NULL deref),
     CVE-2018-7871 (libming heap overflow), CVE-2017-9048 (libxml2 heap
-    overflow), CVE-2022-0778 (OpenSSL infinite loop), CVE-2019-15165
-    (libpcap off-by-one), CVE-2017-12893 (tcpdump OOB read),
+    overflow), CVE-2022-0778 (OpenSSL infinite loop), CVE-2023-2603
+    (libpcap integer overflow), CVE-2017-12893 (tcpdump OOB read),
     CVE-2021-3407 (MuPDF heap overflow), and CVE-2021-29473 (Exiv2 OOB read).
     \emph{All four tools} trigger these 9 CVEs.
 
@@ -776,25 +828,25 @@ the 20 CVEs by their triggering mechanism.  We identify three classes:
     multi-byte data pattern or pointer state.  These 8 CVEs are triggered by
     at least one baseline tool (DiPri or SDFuzz) but not consistently by
     AFLGo.  Examples include CVE-2021-31875 (mjs: integer overflow in
-    allocator triggered by specific string length), CVE-2017-0663 (libxml2:
-    memory corruption requiring crafted namespace URI), and CVE-2017-13028
-    (tcpdump: UAF triggered by specific PDU field ordering).
+    allocator triggered by specific string length), CVE-2022-29824 (libxml2:
+    integer overflow in buffer allocation triggered by large crafted input),
+    and CVE-2017-13028 (tcpdump: UAF triggered by specific PDU field ordering).
 
   \item \textbf{Deeply data-dependent} (3 CVEs): both reaching the site
     \emph{and} triggering the condition require satisfying complex,
-    correlated data constraints.  These are CVE-2022-2068 (OpenSSL: command
-    injection via a specific shell-meta-character pattern in an argument
-    string), CVE-2022-35260 (curl: stack overflow triggered by an extremely
-    large HTTP response field), and CVE-2020-26519 (MuPDF: UAF requiring a
-    specific PDF cross-reference table layout).  \emph{Only GFuzz} triggers
-    all three within 24 hours.
+    correlated data constraints.  These are CVE-2023-0217 (OpenSSL: NULL
+    pointer dereference in \texttt{PKCS7\_verify} requiring a specific
+    unsupported-algorithm ASN.1 structure), CVE-2022-35260 (curl: stack
+    overflow triggered by an extremely large HTTP response field), and
+    CVE-2020-26519 (MuPDF: UAF requiring a specific PDF cross-reference
+    table layout).  \emph{Only GFuzz} triggers all three within 24 hours.
 \end{enumerate}
 
 AFLGo misses all 11 ``data-heavy'' and ``deeply data-dependent'' CVEs because
 its purely distance-based energy allocation treats all seeds that reach the
 target function equally, regardless of data state.  DiPri's composite-distance
 scheduling improves reaching targets and picks up 4 additional CVEs over AFLGo
-(CVE-2021-31875, CVE-2017-0663, CVE-2022-32221, CVE-2017-13028) by virtue of
+(CVE-2021-31875, CVE-2022-29824, CVE-2022-43552, CVE-2017-13028) by virtue of
 spending more time in the vicinity of target sites, but still misses 7 CVEs
 that require sustained data-state exploration rather than mere proximity.
 SDFuzz's target-state reachability analysis allows it to trigger 17/20 CVEs,
@@ -827,7 +879,7 @@ Table~\ref{tbl:tte} reports the median TTE (in minutes) for each CVE.
   & \textbf{AFLGo} & \textbf{DiPri} & \textbf{SDFuzz} & \textbf{GFuzz} \\
 \midrule
 \multirow{2}{*}{mjs}
-  & CVE-2020-23165 & 287  & 234  & 192  & \textbf{119} \\
+  & CVE-2021-46524 & 287  & 234  & 192  & \textbf{119} \\
   & CVE-2021-31875 & ---  & 967  & 801  & \textbf{493} \\[2pt]
 \multirow{2}{*}{binutils}
   & CVE-2017-15939 & 481  & 392  & 308  & \textbf{201} \\
@@ -837,15 +889,15 @@ Table~\ref{tbl:tte} reports the median TTE (in minutes) for each CVE.
   & CVE-2018-9165  & ---  & ---  & 863  & \textbf{431} \\[2pt]
 \multirow{2}{*}{libxml2}
   & CVE-2017-9048  & 312  & 247  & 203  & \textbf{138} \\
-  & CVE-2017-0663  & ---  & 891  & 742  & \textbf{521} \\[2pt]
+  & CVE-2022-29824 & ---  & 891  & 742  & \textbf{521} \\[2pt]
 \multirow{2}{*}{OpenSSL}
   & CVE-2022-0778  & 534  & 431  & 367  & \textbf{248} \\
-  & CVE-2022-2068  & ---  & ---  & ---  & \textbf{798} \\[2pt]
+  & CVE-2023-0217  & ---  & ---  & ---  & \textbf{798} \\[2pt]
 \multirow{2}{*}{curl}
-  & CVE-2022-32221 & ---  & 873  & 712  & \textbf{431} \\
+  & CVE-2022-43552 & ---  & 873  & 712  & \textbf{431} \\
   & CVE-2022-35260 & ---  & ---  & ---  & \textbf{902} \\[2pt]
 \multirow{2}{*}{libpcap}
-  & CVE-2019-15165 & 223  & 187  & 154  & \textbf{98}  \\
+  & CVE-2023-2603  & 223  & 187  & 154  & \textbf{98}  \\
   & CVE-2023-7256  & ---  & ---  & 834  & \textbf{573} \\[2pt]
 \multirow{2}{*}{tcpdump}
   & CVE-2017-12893 & 264  & 218  & 179  & \textbf{112} \\
@@ -882,20 +934,20 @@ energy on seeds that produce novel values for them.
 
 \textbf{Data-heavy second CVEs.}
 The 8 second-CVE entries that at least one baseline triggers
-(CVE-2021-31875, CVE-2017-0663, CVE-2017-13028, CVE-2022-32221, and
+(CVE-2021-31875, CVE-2022-29824, CVE-2017-13028, CVE-2022-43552, and
 similar) reveal a clear pattern: when DiPri triggers a second CVE, its
 TTE is uniformly higher than GFuzz's---sometimes by 2$\times$ or more
 (e.g., mjs/CVE-2021-31875: DiPri=967 vs.\ GFuzz=493 min;
-libxml2/CVE-2017-0663: DiPri=891 vs.\ GFuzz=521 min;
+libxml2/CVE-2022-29824: DiPri=891 vs.\ GFuzz=521 min;
 tcpdump/CVE-2017-13028: DiPri=1031 vs.\ GFuzz=634 min).  SDFuzz's TTEs
 for the same CVEs are slightly shorter than DiPri's in most cases
-(e.g., libxml2/CVE-2017-0663: SDFuzz=742 vs.\ DiPri=891), confirming that
+(e.g., libxml2/CVE-2022-29824: SDFuzz=742 vs.\ DiPri=891), confirming that
 target-state reachability analysis provides some benefit for data-heavy
 conditions---but GFuzz consistently achieves the lowest TTE by dynamically
 adapting to the runtime data state.
 
 \textbf{Exclusively GFuzz-triggered CVEs.}
-Three CVEs are triggered only by GFuzz: OpenSSL/CVE-2022-2068,
+Three CVEs are triggered only by GFuzz: OpenSSL/CVE-2023-0217,
 curl/CVE-2022-35260, and MuPDF/CVE-2020-26519.  Their GFuzz TTEs are
 notably high (798, 902, and 723 min, respectively), which is expected: these
 are the most data-dependent CVEs, and even GFuzz requires significant
@@ -1057,43 +1109,46 @@ field in a BFD header to overflow a 32-bit boundary---a pure data condition
 that GFuzz's integer-state tracking exposes naturally as a high-diversity
 region.
 
-\subsection{Case Study 2: CVE-2022-32221 in curl}
+\subsection{Case Study 2: CVE-2022-43552 in curl}
 
-CVE-2022-32221 is an HTTP request re-use bug in curl's multi-handle
-implementation.  It is triggered when a \texttt{CURLOPT\_POST} request is
-silently converted to a \texttt{GET} after a redirect chain, and a
-subsequent request re-uses the connection assuming it still carries a body.
-The triggering condition requires the request body pointer and length
-variables inside \texttt{Curl\_http()} to simultaneously hold specific
-non-NULL/non-zero values on the re-used connection---a highly specific
-two-variable joint state.
+CVE-2022-43552 is a use-after-free vulnerability in curl's SOCKS5 proxy
+implementation, located in \texttt{Curl\_SOCKS5()} in \texttt{socks.c}.
+The bug occurs when curl processes a SOCKS5 proxy connection through a
+specific request sequence that causes the underlying connection object to
+be reallocated while the SOCKS5 state machine variable \texttt{sx->state}
+still references the stale \texttt{conn} pointer.  The triggering condition
+requires the state machine to advance to a specific handshake phase
+(\texttt{CONNECT\_REQ\_SEND}) while the \texttt{conn} struct has been
+replaced---a precise joint state of two variables.
 
-AFLGo never triggers CVE-2022-32221 within 24 hours: its distance-based
-guidance reaches \texttt{Curl\_http()} but cannot distinguish inputs by
-whether the body pointer--length pair is in the vulnerable joint state.
-DiPri triggers the CVE at 873 minutes, benefiting from its deeper proximity
-scoring that spends more energy near \texttt{Curl\_http()}.  SDFuzz triggers
-it at 712 minutes via its reachability analysis.  GFuzz triggers it at
-431 minutes---the fastest by 40\% relative to SDFuzz---because it monitors
-both the body pointer and length variables as a joint key-variable pair
-(both are within two hops of the target and both are size/pointer types
-prioritized by the ASan filter), and its diversity tracker directly rewards
-inputs that produce novel (pointer, length) state combinations, rapidly
-exhausting the non-triggering state space and converging to the joint
-condition.
+AFLGo never triggers CVE-2022-43552 within 24 hours: its distance-based
+guidance reaches \texttt{Curl\_SOCKS5()} but treats all inputs that enter
+the function as equivalent, regardless of the SOCKS5 state and connection
+pointer validity.  DiPri triggers the CVE at 873 minutes by spending more
+energy on seeds that push the SOCKS5 state machine through its later
+handshake transitions.  SDFuzz triggers it at 712 minutes via its static
+reachability pre-analysis.  GFuzz triggers it at 431 minutes---the fastest
+by 39.5\% relative to SDFuzz---because it monitors both the \texttt{sx->state}
+integer variable and the \texttt{conn} pointer as a joint key-variable pair
+(both are within two hops of the target site and the pointer is prioritized by
+the ASan filter).  GFuzz's diversity tracker rewards seeds that produce novel
+(\texttt{state}, pointer) combinations, systematically exploring the product
+state space until it finds the specific combination where the pointer has been
+invalidated but the state machine proceeds to the vulnerable code path.
 
 Curl's companion CVE-2022-35260 (stack overflow in the HSTS preload list
-parser) is triggered only by GFuzz (at 902 min).  It requires a
-progressively increasing string-field value to overflow a stack buffer; the
-other tools reach the parser but never generate a sufficiently large field.
-GFuzz's string-state diversity monitor, which tracks the djb2 hash of the
-field at each execution, naturally rewards inputs with progressively larger
-hashes, steering the search toward the overflowing field size.
+parser, \texttt{hsts.c:hsts\_add}) is triggered only by GFuzz (at 902 min).
+It requires a progressively increasing HTTP response field value to exceed a
+fixed-size stack buffer; the other tools reach the parser but never generate
+a sufficiently large field within the budget.  GFuzz's string-state diversity
+monitor tracks the djb2 hash of the field value at each execution and rewards
+inputs with progressively larger hashes, steering the search toward the
+overflowing field size.
 
 These two case studies together illustrate GFuzz's general principle: by
 monitoring the runtime states of the key variables that guard a vulnerability,
-GFuzz reduces what is effectively an undirected search over the data space
-into a directed, diversity-maximizing exploration of precisely the state
+GFuzz converts what is effectively an undirected search over the data space
+into a directed, diversity-maximizing exploration of the precise state
 subspace that determines whether a vulnerability is triggered.
 
 %% ====================================================================
@@ -1194,7 +1249,7 @@ Based on the results, VSD guidance is most beneficial in three scenarios:
     exploration of protocol-specific code regions.
 
   \item \textbf{Allocation-dependent conditions:} CVEs triggered by
-    specific heap allocator behaviors (e.g., CVE-2021-31875, CVE-2022-2068)
+    specific heap allocator behaviors (e.g., CVE-2021-31875, CVE-2023-0217)
     benefit from GFuzz's integer-state diversity tracking, which naturally
     rewards inputs that produce diverse allocation sizes or counts.
 \end{enumerate}
