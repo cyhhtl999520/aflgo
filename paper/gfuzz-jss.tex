@@ -593,7 +593,7 @@ as DGF targets, giving 20 CVEs in total.
   ``kSLOC'' denotes thousands of source lines of code (i.e.\
   LOC\,$\times 10^{3}$); ``Tgt.\ Funcs'' is the number of target functions
   specified as DGF goals; ``Target Location'' lists the vulnerable
-  source file and function used as the DGF target site.}
+  source file and line number used as the DGF target site.}
 \label{tbl:benchmarks}
 \begin{tabular}{llp{2.5cm}p{3.2cm}p{4.2cm}rr}
 \toprule
@@ -603,73 +603,73 @@ as DGF targets, giving 20 CVEs in total.
 \midrule
 \multirow{2}{*}{mjs}     & \multirow{2}{*}{1.26}
   & CVE-2021-46524 & Heap buffer overflow
-  & \texttt{mjs.c:mjs\_mk\_string}
+  & \texttt{mjs.c:2489}
   & \multirow{2}{*}{28}   & \multirow{2}{*}{3} \\
   &  & CVE-2021-31875 & Heap buffer overflow
-  & \texttt{mjs.c:mjs\_string\_buf\_set}
+  & \texttt{mjs.c:2371}
   &                       &                    \\[2pt]
 \multirow{2}{*}{binutils}& \multirow{2}{*}{2.28}
   & CVE-2017-15939 & NULL pointer dereference
-  & \texttt{dwarf2.c:decode\_line\_info}
+  & \texttt{dwarf2.c:2813}
   & \multirow{2}{*}{1142} & \multirow{2}{*}{4} \\
   &  & CVE-2018-7568  & Integer overflow
-  & \texttt{dwarf.c:process\_debug\_info}
+  & \texttt{dwarf.c:1891}
   &                       &                    \\[2pt]
 \multirow{2}{*}{libming} & \multirow{2}{*}{0.4.8}
   & CVE-2018-7871  & Heap buffer overflow
-  & \texttt{decompile.c:decompileIF}
+  & \texttt{decompile.c:1248}
   & \multirow{2}{*}{32}   & \multirow{2}{*}{3} \\
   &  & CVE-2018-9165  & NULL pointer dereference
-  & \texttt{swf.c:readSWF}
+  & \texttt{swf.c:341}
   &                       &                    \\[2pt]
 \multirow{2}{*}{libxml2} & \multirow{2}{*}{2.9.13}
   & CVE-2017-9048  & Heap buffer overflow
-  & \texttt{valid.c:xmlSnprintfElementContent}
+  & \texttt{valid.c:2083}
   & \multirow{2}{*}{253}  & \multirow{2}{*}{3} \\
   &  & CVE-2022-29824 & Integer overflow
-  & \texttt{buf.c:xmlBufAdd}
+  & \texttt{buf.c:443}
   &                       &                    \\[2pt]
 \multirow{2}{*}{OpenSSL} & \multirow{2}{*}{3.0.4}
   & CVE-2022-0778  & Infinite loop (DoS)
-  & \texttt{bn\_sqrt.c:BN\_mod\_sqrt}
+  & \texttt{bn\_sqrt.c:627}
   & \multirow{2}{*}{962}  & \multirow{2}{*}{4} \\
   &  & CVE-2023-0217  & NULL pointer dereference
-  & \texttt{pk7\_smime.c:PKCS7\_verify}
+  & \texttt{dsa\_ameth.c:71}
   &                       &                    \\[2pt]
 \multirow{2}{*}{curl}    & \multirow{2}{*}{7.83.1}
   & CVE-2022-43552 & Use-after-free
-  & \texttt{socks.c:Curl\_SOCKS5}
+  & \texttt{socks.c:1048}
   & \multirow{2}{*}{168}  & \multirow{2}{*}{3} \\
   &  & CVE-2022-35260 & Stack overflow
-  & \texttt{hsts.c:hsts\_add}
+  & \texttt{hsts.c:289}
   &                       &                    \\[2pt]
 \multirow{2}{*}{libpcap} & \multirow{2}{*}{1.9.1}
   & CVE-2023-2603  & Integer overflow
-  & \texttt{cap\_text.c:\_libcap\_strdup}
+  & \texttt{cap\_text.c:183}
   & \multirow{2}{*}{57}   & \multirow{2}{*}{3} \\
   &  & CVE-2023-7256  & Use-after-free
-  & \texttt{pcap.c:pcap\_findalldevs\_ex}
+  & \texttt{pcap.c:2891}
   &                       &                    \\[2pt]
 \multirow{2}{*}{tcpdump} & \multirow{2}{*}{4.9.3}
   & CVE-2017-12893 & OOB buffer read
-  & \texttt{print-sflow.c:sflow\_print}
+  & \texttt{print-sflow.c:748}
   & \multirow{2}{*}{52}   & \multirow{2}{*}{3} \\
-  &  & CVE-2017-13028 & Use-after-free
-  & \texttt{print-bootp.c:bootp\_print}
+  &  & CVE-2017-13028 & OOB buffer read
+  & \texttt{print-bootp.c:312}
   &                       &                    \\[2pt]
 \multirow{2}{*}{MuPDF}   & \multirow{2}{*}{1.18.0}
   & CVE-2021-3407  & Heap buffer overflow
-  & \texttt{pdf-font.c:pdf\_load\_font}
+  & \texttt{pdf-font.c:1523}
   & \multirow{2}{*}{188}  & \multirow{2}{*}{4} \\
   &  & CVE-2020-26519 & Use-after-free
-  & \texttt{pdf-op-run.c:run\_xobject}
+  & \texttt{pdf-op-run.c:874}
   &                       &                    \\[2pt]
 \multirow{2}{*}{Exiv2}   & \multirow{2}{*}{0.27.4}
   & CVE-2021-29473 & Heap OOB read
-  & \texttt{jp2image.cpp:readMetadata}
+  & \texttt{jp2image.cpp:218}
   & \multirow{2}{*}{127}  & \multirow{2}{*}{3} \\
-  &  & CVE-2021-34334 & NULL pointer dereference
-  & \texttt{tiffimage.cpp:visitEntry}
+  &  & CVE-2021-34334 & Infinite loop (DoS)
+  & \texttt{tiffimage.cpp:1791}
   &                       &                    \\
 \midrule
 \multicolumn{5}{l}{\textbf{Total / Average}} & \textbf{301.0} & \textbf{3.3} \\
@@ -830,14 +830,15 @@ the 20 CVEs by their triggering mechanism.  We identify three classes:
     AFLGo.  Examples include CVE-2021-31875 (mjs: integer overflow in
     allocator triggered by specific string length), CVE-2022-29824 (libxml2:
     integer overflow in buffer allocation triggered by large crafted input),
-    and CVE-2017-13028 (tcpdump: UAF triggered by specific PDU field ordering).
+    and CVE-2017-13028 (tcpdump: OOB buffer read triggered by a specific PDU field ordering in the BOOTP printer).
 
   \item \textbf{Deeply data-dependent} (3 CVEs): both reaching the site
     \emph{and} triggering the condition require satisfying complex,
     correlated data constraints.  These are CVE-2023-0217 (OpenSSL: NULL
-    pointer dereference in \texttt{PKCS7\_verify} requiring a specific
-    unsupported-algorithm ASN.1 structure), CVE-2022-35260 (curl: stack
-    overflow triggered by an extremely large HTTP response field), and
+    pointer dereference in \texttt{dsa\_ameth.c:dsa\_pub\_decode} triggered
+    by a DSA public key whose parameter set is invalid in a specific way),
+    CVE-2022-35260 (curl: stack overflow triggered by an extremely
+    large HTTP response field), and
     CVE-2020-26519 (MuPDF: UAF requiring a specific PDF cross-reference
     table layout).  \emph{Only GFuzz} triggers all three within 24 hours.
 \end{enumerate}
