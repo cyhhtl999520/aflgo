@@ -18,6 +18,16 @@ in/
 sync/
 .test-instr*
 
+# Paper build artifacts
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/*.pdf
+paper/*.spl
+paper/*.toc
+
 # Temporary files
 *~
 *.swp
