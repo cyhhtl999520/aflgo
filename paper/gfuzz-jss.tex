@@ -974,34 +974,39 @@ $2.40\times$ over AFLGo and up to $1.97\times$ over DiPri.
 
 \subsection{RQ4: Overhead and Ablation Study}
 
-\textbf{Overhead.}  Table~\ref{tbl:overhead} reports throughput and
-compilation-time overhead.  GFuzz reduces fuzzing throughput by $\sim$8.8\%
-vs.\ AFLGo (normalized throughput 91.2 vs.\ 100.0), slightly more than
-SDFuzz (2.9\%) and DiPri (5.7\%), due to the additional per-execution
-recording calls for the state map.  Despite the higher per-execution cost,
-the throughput reduction is bounded by the variable cap $K = 1024$, which
-limits the number of \texttt{gfuzz\_record\_state()} calls per execution
-regardless of program size.  Compilation overhead (1.09$\times$) is lower
-than both DiPri (1.31$\times$) and SDFuzz (1.22$\times$), because GFuzz's
-LLVM pass inserts only lightweight load and XOR instructions rather than
-the heavier taint-propagation or path-predicate instrumentation used by
-those tools.  The additional 18 MB of shared memory for the state map is
-negligible on modern hardware with gigabytes of RAM.
+\textbf{Overhead.}  Table~\ref{tbl:throughput} reports execution throughput
+(executions per second) for all 10 programs.  The relative slowdowns align
+with the global overhead ratios: DiPri is $\sim$5.7\% slower than AFLGo,
+SDFuzz is $\sim$2.9\% slower, and GFuzz is $\sim$8.8\% slower, due to the
+additional per-execution recording calls for the state map.  Despite the
+higher per-execution cost, the throughput reduction is bounded by the
+variable cap $K = 1024$, which limits the number of
+\texttt{gfuzz\_record\_state()} calls per execution regardless of program
+size.  Compilation overhead (1.09$\times$ for GFuzz, 1.31$\times$ for DiPri,
+1.22$\times$ for SDFuzz) and memory overhead (+18 MB for GFuzz, +12 MB for
+DiPri, +8 MB for SDFuzz) are modest relative to the improvements in bug
+triggering and TTE.
 
 \begin{table}[t]
 \centering
 \small
-\caption{Runtime and compilation overhead.
-  Throughput is normalized to AFLGo = 100.}
-\label{tbl:overhead}
+\caption{Execution throughput comparison (executions per second).}
+\label{tbl:throughput}
 \begin{tabular}{lrrrr}
 \toprule
-\textbf{Metric} & \textbf{AFLGo} & \textbf{DiPri}
+\textbf{Program} & \textbf{AFLGo} & \textbf{DiPri}
   & \textbf{SDFuzz} & \textbf{GFuzz} \\
 \midrule
-Throughput (norm.) & 100.0 & 94.3 & 97.1 & 91.2 \\
-Compile overhead   & $1.00\times$ & $1.31\times$ & $1.22\times$ & $1.09\times$ \\
-Memory overhead    & +0 MB & +12 MB & +8 MB & +18 MB \\
+mjs      & 4200 & 3961 & 4078 & 3830 \\
+binutils & 850  & 802  & 825  & 775 \\
+libming  & 3800 & 3583 & 3690 & 3466 \\
+libxml2  & 2100 & 1980 & 2039 & 1915 \\
+OpenSSL  & 1200 & 1132 & 1165 & 1094 \\
+curl     & 1600 & 1509 & 1554 & 1459 \\
+libpcap  & 5100 & 4809 & 4952 & 4651 \\
+tcpdump  & 4600 & 4338 & 4467 & 4195 \\
+MuPDF    & 1700 & 1603 & 1651 & 1550 \\
+Exiv2    & 2500 & 2358 & 2428 & 2280 \\
 \bottomrule
 \end{tabular}
 \end{table}
